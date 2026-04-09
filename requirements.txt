@@ -12,7 +12,7 @@ feedparser==6.0.12
 frozendict==2.4.7
 idna==3.11
 Jinja2==3.1.6
-jsonschema==4.25.1
+jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
 MarkupSafe==3.0.3
 multitasking==0.0.12
