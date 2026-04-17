@@ -19,7 +19,7 @@ multitasking==0.0.12
 narwhals==2.19.0
 numpy==2.4.4
 packaging==25.0
-pandas==2.3.3
+pandas==3.0.2
 pillow==12.2.0
 platformdirs==4.4.0
 plotly==6.6.0
