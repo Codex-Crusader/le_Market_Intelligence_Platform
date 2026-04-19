@@ -90,6 +90,14 @@ def _normalize_ticker_input(raw: str) -> str:
     return val if _TICKER_INPUT_RE.fullmatch(val) else ""
 
 
+def _ticker_exists(symbol: str) -> bool:
+    try:
+        import yfinance as yf
+        return bool(getattr(yf.Ticker(symbol).fast_info, "currency", None))
+    except (OSError, ValueError, KeyError):
+        return False
+
+
 # ── Scan orchestration ─────────────────────────────────────────────────────────
 
 @st.cache_resource
@@ -197,32 +205,51 @@ st.sidebar.markdown("---")
 
 st.sidebar.markdown("**Ticker Lookup (Local App Only)**")
 custom_ticker_raw = st.sidebar.text_input(
-    "Custom Yahoo ticker",
+    "Ticker symbol (e.g. PLTR, ARM, TSMC)",
     key="_custom_ticker_input",
     placeholder="e.g. PLTR, ARM, TSM, BRK-B",
 )
 custom_ticker = _normalize_ticker_input(custom_ticker_raw)
+if not custom_ticker_raw.strip():
+    st.session_state.pop("_confirmed_custom_ticker", None)
+    st.session_state.pop("_ticker_invalid", None)
 if custom_ticker_raw.strip() and not custom_ticker:
     st.sidebar.warning(
         "Invalid ticker format. Use letters/numbers and optional ., -, ^, = characters.",
         icon="⚠️",
     )
 
-if st.sidebar.button(
-    "Clear custom ticker",
-    disabled=not bool(custom_ticker_raw.strip()),
-):
-    st.session_state["_custom_ticker_input"] = ""
+_col1, _col2 = st.sidebar.columns(2)
+if _col1.button("Analyse", disabled=not bool(custom_ticker)):
+    with st.spinner(f"Validating {custom_ticker} …"):
+        if _ticker_exists(custom_ticker):
+            st.session_state["_confirmed_custom_ticker"] = custom_ticker
+            st.session_state.pop("_ticker_invalid", None)
+        else:
+            st.session_state["_confirmed_custom_ticker"] = ""
+            st.session_state["_ticker_invalid"] = custom_ticker
     st.rerun()
+if _col2.button("Clear", disabled=not bool(custom_ticker_raw.strip())):
+    st.session_state["_custom_ticker_input"] = ""
+    st.session_state["_confirmed_custom_ticker"] = ""
+    st.session_state.pop("_ticker_invalid", None)
+    st.rerun()
+
+_invalid_sym = st.session_state.get("_ticker_invalid", "")
+if _invalid_sym:
+    st.sidebar.error(
+        f"No data found for **{_invalid_sym}**. Check the ticker symbol and try again."
+    )
 
 st.sidebar.markdown("---")
 
-using_custom_ticker = bool(custom_ticker)
+_confirmed = st.session_state.get("_confirmed_custom_ticker", "")
+using_custom_ticker = bool(_confirmed)
 
 if using_custom_ticker:
     selected_category = "Custom Ticker"
-    selected_asset = custom_ticker
-    ticker = custom_ticker
+    selected_asset = _confirmed
+    ticker = _confirmed
 else:
     categories = list(TRACKED_ASSETS.keys())
     default_cat_idx = categories.index(DEFAULT_CATEGORY) if DEFAULT_CATEGORY in categories else 0
