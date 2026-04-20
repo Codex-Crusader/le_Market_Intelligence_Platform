@@ -28,6 +28,7 @@ from pulseengine.core import (  # noqa:F401
     deduplicate_articles,
     cluster_articles,
     get_display_clusters,
+    generate_keywords,
     # Signals
     correlate_news,
     detect_events,
