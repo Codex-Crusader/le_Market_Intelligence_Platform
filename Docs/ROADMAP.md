@@ -30,15 +30,16 @@ The project is split into two surfaces sharing one core engine:
 
 ## Current State
 
-[![Version](https://img.shields.io/badge/Version-0.2.2-a16207?style=flat-square)]()
+[![Version](https://img.shields.io/badge/Version-0.3.0-a16207?style=flat-square)]()
 [![Assets](https://img.shields.io/badge/Assets-24%20Tracked-0ea5e9?style=flat-square)]()
-[![Tests](https://img.shields.io/badge/Tests-37%20passing-22c55e?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/Tests-54%20passing-22c55e?style=flat-square)]()
 [![Sentiment](https://img.shields.io/badge/Sentiment-VADER-7c3aed?style=flat-square)]()
 [![Demo](https://img.shields.io/badge/Demo-Live-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://pulseengine.streamlit.app/)
 
 What exists right now:
 
 - 24 tracked assets across Commodities, Cryptocurrency, Tech Stocks, and Market Indices
+- Arbitrary ticker lookup — enter any valid Yahoo Finance symbol in the sidebar
 - VADER sentiment engine with injected financial lexicon
 - 12 RSS feeds ingested in parallel with Jaccard deduplication
 - RSI, momentum, trend strength, and 8-category event detection
@@ -47,13 +48,12 @@ What exists right now:
 - Compressed snapshot storage with tiered retention (7 / 30 / 60 days)
 - Backtesting module with hit-rate evaluation
 - Streamlit live demo at [pulseengine.streamlit.app](https://pulseengine.streamlit.app/)
-- Docker support, 37 tests, full documentation
-- Modular package layout (`src/`, `app/`, `dashboard/`, `storage/`, `config/`) — completed in v0.2.1
+- Docker support, 54 tests, full documentation
+- Local installer (`install.py`, `install.sh`, `install.ps1`) with zero terminal friction
+- Clean `pulseengine/core/` + `pulseengine/local/` + `pulseengine/web/` split — completed in v0.3.0
 
 What is missing:
 
-- Arbitrary ticker support
-- A local installer with zero terminal friction
 - A desktop executable
 - A proper financial NLP model
 
@@ -69,21 +69,16 @@ What is missing:
 
 ### Repo restructure
 
-> **Done in v0.2.1.** The codebase is now organised into `src/`, `app/`, `dashboard/`, `storage/`, and `config/` packages. No further structural reorganization is required before v0.3.
+> **Done in v0.3.0.** The codebase is now split into `pulseengine/core/` (shared engine), `pulseengine/local/` (full-featured local app), and `pulseengine/web/` (restricted stateless demo). Old flat packages (`app/`, `dashboard/`, `src/`, `config/`, `storage/`) remain as backward-compat shims and do not need modification.
 
 ### Arbitrary ticker support
 
-Right now every asset has a handcrafted keyword list in `config.py`. Scaling beyond 24 assets means:
-
-- User can type any valid ticker symbol into the dashboard
-- Keywords auto-generated from company name, ticker symbol, and executive names
-- Low-news-volume stocks handled gracefully with fallback signal behaviour
-- Contributors can add any stock without touching `config.py`
+> **Done in v0.3.0.** Users can enter any valid Yahoo Finance ticker in the dashboard sidebar. `generate_keywords` in `pulseengine.core.news` auto-builds keyword coverage from ticker metadata; the dashboard applies low-news-confidence safeguards when coverage is sparse.
 
 ### Other v0.3 deliverables
 
-- Local installer script — one command, no friction, no manual dependency wrangling
-- Close remaining issue backlog: #10 (last scanned message), #11 (config.py docstrings)
+> **All done in v0.3.0.**
+- Local installer (`install.py`, `install.sh`, `install.ps1`) — one command, no friction, generates platform launch scripts
 - `ROADMAP.md` published and linked from the README
 
 ---

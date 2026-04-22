@@ -6,8 +6,8 @@ news feeds, sentiment analysis, and multi-factor signal generation.
 
 Architectural layers:
     core       - Headless engine module (shared by local/ and web/)
-    local      - Streamlit dashboard and batch scanning CLI (future)
-    web        - Web service wrapper (future)
+    local      - Full-featured Streamlit dashboard and batch scan CLI
+    web        - Restricted Streamlit demo (no file I/O, no local model inference)
 """
 
 __version__ = "0.3.0"

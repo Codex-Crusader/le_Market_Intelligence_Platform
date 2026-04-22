@@ -150,11 +150,20 @@ pip install -r requirements.txt
 # Optional: install developer tooling for tests and linting
 pip install -r requirements-dev.txt
 
-# 4. Run the dashboard
+# 4. Run the dashboard (local app — full features)
+streamlit run pulseengine/local/dashboard.py
+
+# Or use the legacy entry point (backward-compatible, same app)
 streamlit run dashboard/main.py
 ```
 
 The dashboard opens at `http://localhost:8501`. A full-market background scan starts automatically on first load and repeats every 30 minutes.
+
+To run the **web demo** surface locally (restricted, no file I/O):
+
+```bash
+streamlit run pulseengine/web/dashboard.py
+```
 
 ---
 
@@ -250,6 +259,13 @@ launch.bat
 Or run directly:
 
 ```bash
+# Local app (full features — canonical entry point)
+streamlit run pulseengine/local/dashboard.py
+
+# Web demo (restricted, stateless — mirrors the live Streamlit Cloud deployment)
+streamlit run pulseengine/web/dashboard.py
+
+# Legacy entry point (backward-compatible, redirects to the local app)
 streamlit run dashboard/main.py
 ```
 
@@ -273,14 +289,17 @@ The sidebar shows the scan status (running / N minutes ago / pending first run) 
 The scan pipeline can be executed independently of the dashboard:
 
 ```bash
-# Full verbose scan — saves snapshots and summary
-python -m app.scan
+# Full verbose scan — saves snapshots and summary (canonical)
+python -m pulseengine.local.scan
 
 # Suppress per-asset log lines
-python -m app.scan --quiet
+python -m pulseengine.local.scan --quiet
 
 # Validate pipeline without writing any files
-python -m app.scan --dry-run
+python -m pulseengine.local.scan --dry-run
+
+# Legacy entry point (backward-compatible)
+python -m app.scan
 ```
 
 Output is written to:
@@ -291,7 +310,7 @@ Output is written to:
 
 ## Configuration
 
-All tunable values are in `config/settings.py`. No magic numbers exist anywhere else in the codebase.
+All tunable values are in `pulseengine/core/config.py`. No magic numbers exist anywhere else in the codebase.
 
 | Constant | Default | Description |
 |---|---|---|
@@ -380,7 +399,7 @@ market_data/
 The backtesting module evaluates historical signal accuracy by comparing the signal score on day N with the actual price direction from day N to day N+1.
 
 ```python
-from app.backtest import evaluate_signal_accuracy
+from pulseengine.core.backtest import evaluate_signal_accuracy
 result = evaluate_signal_accuracy("Gold", lookback=20)
 print(result["hit_rate"])
 ```
@@ -397,33 +416,32 @@ Results are broken down by:
 
 ```
 pulse_engine_1/
-  app/
-    __init__.py
-    analysis.py         Re-export shim + CLI entry point (wraps src/ modules)
-    scan.py             Full-market batch scan pipeline
-    backtest.py         Historical signal accuracy evaluation
-  dashboard/
-    __init__.py
-    main.py             Streamlit dashboard controller
-    components.py       Reusable UI rendering functions
-    styles.py           CSS theming for the dashboard
-    data.py             Cached data loaders and staleness helpers
-  storage/
-    __init__.py
-    storage.py          Compressed snapshot persistence and retention
-  config/
-    __init__.py
-    settings.py         All configuration constants
-  src/
-    __init__.py
-    engine.py           Pipeline orchestration (analyse_asset, run_full_scan)
-    price.py            Yahoo Finance fetching and price metrics
-    news.py             RSS fetching, deduplication, and clustering
-    signals.py          Signal scoring, event detection, news correlation
-    context.py          Sector and market context analysis
-    explanation.py      Human-readable narrative generation
-    sentiment.py        VADER + financial-lexicon sentiment scoring
-    errors.py           Custom exception types (PipelineError hierarchy)
+  pulseengine/
+    core/               Shared headless engine — imported by both local/ and web/
+      app.py            Pipeline orchestration (analyse_asset, run_full_scan)
+      config.py         All configuration constants
+      storage.py        Compressed snapshot persistence and retention
+      backtest.py       Historical signal accuracy evaluation
+      price.py          Yahoo Finance fetching and price metrics
+      news.py           RSS fetching, deduplication, and clustering
+      signals.py        Signal scoring, event detection, news correlation
+      context.py        Sector and market context analysis
+      explanation.py    Human-readable narrative generation
+      sentiment.py      VADER + financial-lexicon sentiment scoring
+      errors.py         Custom exception types (PipelineError hierarchy)
+    local/              Full-featured local app surface
+      dashboard.py      Streamlit dashboard controller (canonical entry point)
+      scan.py           Full-market batch scan pipeline
+      components.py     Reusable UI rendering functions
+      styles.py         CSS theming for the dashboard
+      data.py           Cached data loaders and staleness helpers
+    web/                Restricted web demo surface (no file I/O, no local models)
+      dashboard.py      Stateless Streamlit demo (deployed to Community Cloud)
+  app/                  Backward-compat shims → pulseengine.core (do not modify)
+  dashboard/            Backward-compat shims → pulseengine.local (do not modify)
+  src/                  Backward-compat shims → pulseengine.core (do not modify)
+  config/               Backward-compat shims → pulseengine.core (do not modify)
+  storage/              Backward-compat shims → pulseengine.core (do not modify)
   assets/
     icons/
       favicon.ico
@@ -492,7 +510,7 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 PulseEngine is being built toward a local-first desktop application — a full-power EXE that runs entirely on your machine with no cloud dependency, no accounts, and no data leaving your device. The Streamlit deployment is a live demo with restricted features.
 
 Planned milestones:
-- **v0.3** — Arbitrary ticker support _(local installer shipped; repo restructure done in v0.2.1)_
+- **v0.3** — Foundation split + arbitrary ticker support _(complete: `pulseengine/core/`, `local/`, `web/` split; local installer shipped)_
 - **v0.4** — Desktop EXE via PyInstaller, GitHub Actions build pipeline
 - **v0.5** — FinBERT running locally, offline mode, export features
 - **v1.0** — Full market coverage, dynamic asset discovery, all stocks

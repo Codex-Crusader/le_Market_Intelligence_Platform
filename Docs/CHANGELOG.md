@@ -4,15 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [Unreleased] — v0.3 development
+## [0.3.0] — 2026-04-22
+### "Foundation Split + Arbitrary Tickers"
 
 ### Added
+- `pulseengine/` top-level package with three sub-surfaces:
+  - `pulseengine/core/` — shared headless engine (`app.py`, `config.py`, `storage.py`, `backtest.py`, `price.py`, `news.py`, `signals.py`, `context.py`, `explanation.py`, `sentiment.py`, `errors.py`). Imported by both `local/` and `web/`.
+  - `pulseengine/local/` — full-featured local app surface (`dashboard.py`, `scan.py`, `components.py`, `styles.py`, `data.py`). Supports file I/O, backtest, snapshot storage, and arbitrary ticker analysis.
+  - `pulseengine/web/` — restricted stateless demo surface (`dashboard.py`). No file I/O, no local model inference, no persistent state.
+- Arbitrary ticker lookup wired end-to-end: users can enter any valid Yahoo Finance ticker in the sidebar; `generate_keywords` in `pulseengine.core.news` auto-generates keyword coverage; low-news-confidence safeguards apply when coverage is sparse.
 - `install.py`: Cross-platform local installer — verifies Python version (3.11–3.14), creates `.venv/` via `python -m venv`, installs `requirements.txt` inside it, verifies all six key package imports, and generates a platform-appropriate launch script (`launch.bat` + `launch.ps1` on Windows, `launch.sh` on macOS/Linux).
 - `install.sh`: macOS/Linux convenience wrapper that detects a compatible Python 3.11–3.14 interpreter across common command names and delegates to `install.py`.
 - `install.ps1`: Windows PowerShell wrapper with equivalent Python detection, including a `py` launcher fallback for specific minor versions, then delegates to `install.py`.
 - `.vscode/launch.json`: VS Code debug/run configurations for all five entry points (Dashboard, Scan Dry Run, Scan Full, Analysis CLI, Tests).
 - `.idea/runConfigurations/`: PyCharm run/debug configurations for the same five entry points, compatible with both Community and Professional editions.
 - `CONTRIBUTING.md` **IDE Setup** section documenting how to use the shared configurations in VS Code and PyCharm.
+- Backward-compat shim packages (`app/`, `dashboard/`, `src/`, `config/`, `storage/`) re-export from the new canonical locations so existing scripts and imports continue to work without changes.
 
 ### Fixed
 - `install.ps1`: `$PyVersion` was never initialized before use, causing a `StrictMode` exception on the common path where Python was found via the normal candidate loop — the script crashed before ever reaching `install.py`.
@@ -20,12 +27,17 @@ All notable changes to this project will be documented in this file.
 - `install.py`: `UnicodeEncodeError` crash on Windows `cp1252` consoles when printing the box-drawing banner characters — stdout/stderr are now reconfigured to UTF-8 at startup.
 
 ### Changed
+- Canonical entry points changed:
+  - Dashboard: `streamlit run pulseengine/local/dashboard.py`
+  - Web demo: `streamlit run pulseengine/web/dashboard.py`
+  - Scan CLI: `python -m pulseengine.local.scan`
+  - Legacy entry points (`dashboard/main.py`, `python -m app.scan`) remain as backward-compat shims.
 - `.gitignore` updated to ignore `launch.bat`, `launch.ps1`, and `launch.sh` (installer-generated artifacts) and to unignore `.vscode/launch.json` and `.idea/runConfigurations/`.
 - `CONTRIBUTING.md` **Pull Request Process** "Do not commit" list updated to allow the new IDE config paths and clarify which IDE files remain excluded.
-- `README.md` **Project Structure** updated to document installer and launch-script files, `.vscode/` and `.idea/runConfigurations/` entries.
-- `README.md` **Installation** section now leads with the automated installer instructions.
-- `README.md` **Running the Dashboard** updated to mention the generated launch scripts as the primary launch method.
-- `README.md` **Roadmap** updated to reflect that the local installer is shipped.
+- `README.md` updated throughout to reflect new canonical entry points, module paths, and project structure.
+- `Docs/code_flow.md` updated: all module badges, diagram entry points, and prose references updated from old flat layout to `pulseengine/core/`, `pulseengine/local/`, `pulseengine/web/`.
+- `Docs/ROADMAP.md` v0.3 section updated to mark repo restructure complete.
+- Test count: 54 passing (up from 42 in v0.2.3).
 
 ---
 
