@@ -77,7 +77,7 @@ st.set_page_config(
 
 # ── CSS (same Retro Financial Broadsheet theme) ────────────────────────────────
 
-from pulseengine.local.styles import load_css
+from pulseengine.local.styles import load_css  # noqa: E402
 load_css()
 
 # ── Cached data loaders ────────────────────────────────────────────────────────
