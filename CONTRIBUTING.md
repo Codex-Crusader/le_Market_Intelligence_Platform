@@ -122,7 +122,7 @@ pytest
 python -m app.scan --dry-run
 
 # 5. Run the dashboard
-streamlit run dashboard/main.py
+streamlit run pulseengine/local/dashboard.py
 ```
 
 ---
@@ -139,7 +139,7 @@ Open the project folder in VS Code. The configurations in `.vscode/launch.json` 
 
 | Configuration | Equivalent command |
 |---|---|
-| Dashboard (Streamlit) | `streamlit run dashboard/main.py` |
+| Dashboard (Streamlit) | `streamlit run pulseengine/local/dashboard.py` |
 | Scan (Dry Run) | `python -m app.scan --dry-run` |
 | Scan (Full) | `python -m app.scan` |
 | Analysis CLI | `python -m app.analysis` |
@@ -155,7 +155,7 @@ The run configurations in `.idea/runConfigurations/` are loaded automatically by
 
 | Configuration | Equivalent command |
 |---|---|
-| Dashboard | `python -m streamlit run dashboard/main.py` |
+| Dashboard | `python -m streamlit run pulseengine/local/dashboard.py` |
 | Scan (Dry Run) | `python -m app.scan --dry-run` |
 | Scan (Full) | `python -m app.scan` |
 | Analysis CLI | `python -m app.analysis` |
@@ -219,7 +219,7 @@ In addition to the automated tests, verify the following manually before submitt
 
 2. **Dashboard loads without warnings or errors in the terminal**
    ```bash
-   streamlit run dashboard/main.py
+  streamlit run pulseengine/local/dashboard.py
    ```
 
 3. **At least two assets from different categories render correctly** in the dashboard without errors in the Streamlit UI or the terminal

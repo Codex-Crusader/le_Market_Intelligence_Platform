@@ -363,7 +363,7 @@ def generate_launch_script() -> Path:
             echo "Press Ctrl+C to stop."
             echo ""
 
-            ".venv/bin/streamlit" run "dashboard/main.py"
+            ".venv/bin/streamlit" run "pulseengine/local/dashboard.py"
         """)
         launch_path.write_text(content, encoding="utf-8")
         launch_path.chmod(0o755)  # make executable
@@ -398,7 +398,7 @@ def print_success(launch_path: Path) -> None:
         print(f"             {bold('./launch.sh')}")
         print(f"  {cyan('Option B')} — Manually activate the venv and run:")
         print(f"             {bold('source .venv/bin/activate')}")
-        print(f"             {bold('streamlit run dashboard/main.py')}")
+        print(f"             {bold('streamlit run pulseengine/local/dashboard.py')}")
 
     print()
     print(f"  The dashboard will open at:  {bold(cyan('http://localhost:8501'))}")
