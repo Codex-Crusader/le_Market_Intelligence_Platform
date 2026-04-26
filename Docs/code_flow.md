@@ -45,7 +45,7 @@ flowchart TD
 
 ## 2. Background Full-Market Scan
 
-`_run_background_scan` delegates entirely to `pulseengine.local.scan.run_scan()`. News is fetched once and reused across all 24 assets. A `price_cache` (`{ticker: change_1d}`) is pre-built via `fetch_all_metrics_parallel` before the loop, eliminating redundant yfinance calls during context analysis. Each asset is analysed with `with_market_ctx=True` and `save=True`.
+`_run_background_scan` (in `pulseengine/local/dashboard.py`) calls `pulseengine.local.scan.run_scan()`. The full batch pipeline lives in `pulseengine/local/scan.py`. News is fetched once and reused across all 24 assets. A `price_cache` (`{ticker: change_1d}`) is pre-built via `fetch_all_metrics_parallel` before the loop, eliminating redundant yfinance calls during context analysis. Each asset is analysed with `with_market_ctx=True` and `save=True`.
 
 ```mermaid
 flowchart TD

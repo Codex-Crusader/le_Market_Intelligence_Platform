@@ -30,7 +30,7 @@ The project is split into two surfaces sharing one core engine:
 
 ## Current State
 
-[![Version](https://img.shields.io/badge/Version-0.3.0-a16207?style=flat-square)]()
+[![Version](https://img.shields.io/badge/Version-0.3.1-a16207?style=flat-square)]()
 [![Assets](https://img.shields.io/badge/Assets-24%20Tracked-0ea5e9?style=flat-square)]()
 [![Tests](https://img.shields.io/badge/Tests-54%20passing-22c55e?style=flat-square)]()
 [![Sentiment](https://img.shields.io/badge/Sentiment-VADER-7c3aed?style=flat-square)]()
@@ -69,7 +69,7 @@ What is missing:
 
 ### Repo restructure
 
-> **Done in v0.3.0.** The codebase is now split into `pulseengine/core/` (shared engine), `pulseengine/local/` (full-featured local app), and `pulseengine/web/` (restricted stateless demo). Old flat packages (`app/`, `dashboard/`, `src/`, `config/`, `storage/`) remain as backward-compat shims and do not need modification.
+> **Done in v0.3.0 + v0.3.1.** The codebase is split into `pulseengine/core/` (shared engine), `pulseengine/local/` (full-featured local app), and `pulseengine/web/` (restricted stateless demo). In v0.3.0 the foundation packages were created; in v0.3.1 the full production implementations were migrated into `pulseengine/local/` (dashboard, components, styles, data, scan) and the old flat packages (`app/`, `dashboard/`, `config/`, `storage/`) became reverse shims pointing to the canonical locations.
 
 ### Arbitrary ticker support
 

@@ -1,17 +1,19 @@
 # Variable and Constant Reference
 
-[![Source: config/settings.py](https://img.shields.io/badge/Source-config/settings.py-64748b?style=flat-square)]()
-[![Source: app/analysis.py](https://img.shields.io/badge/Source-app/analysis.py-3776AB?style=flat-square)]()
-[![Source: dashboard/main.py](https://img.shields.io/badge/Source-dashboard/main.py-FF4B4B?style=flat-square)]()
-[![Source: storage/storage.py](https://img.shields.io/badge/Source-storage/storage.py-f59e0b?style=flat-square)]()
-[![Source: app/scan.py](https://img.shields.io/badge/Source-app/scan.py-22c55e?style=flat-square)]()
-[![Source: app/backtest.py](https://img.shields.io/badge/Source-app/backtest.py-7c3aed?style=flat-square)]()
+[![Source: pulseengine/core/config.py](https://img.shields.io/badge/Source-pulseengine/core/config.py-64748b?style=flat-square)]()
+[![Source: pulseengine/core/app.py](https://img.shields.io/badge/Source-pulseengine/core/app.py-3776AB?style=flat-square)]()
+[![Source: pulseengine/local/dashboard.py](https://img.shields.io/badge/Source-pulseengine/local/dashboard.py-FF4B4B?style=flat-square)]()
+[![Source: pulseengine/core/storage.py](https://img.shields.io/badge/Source-pulseengine/core/storage.py-f59e0b?style=flat-square)]()
+[![Source: pulseengine/local/scan.py](https://img.shields.io/badge/Source-pulseengine/local/scan.py-22c55e?style=flat-square)]()
+[![Source: pulseengine/core/backtest.py](https://img.shields.io/badge/Source-pulseengine/core/backtest.py-7c3aed?style=flat-square)]()
 
 This document lists every significant constant, module-level variable, function parameter, and return structure across the codebase. Types follow Python annotation conventions.
 
+> **Module paths** refer to canonical locations in `pulseengine/`. Legacy shim packages (`app/`, `dashboard/`, `config/`, `storage/`) re-export from these canonical paths and remain functional for backward compatibility.
+
 ---
 
-## config/settings.py — All Constants
+## pulseengine/core/config.py — All Constants
 
 ### 1. Asset Configuration
 
@@ -109,9 +111,9 @@ This document lists every significant constant, module-level variable, function 
 
 ---
 
-## app/analysis.py — Re-export Shim and src/ Module Reference
+## pulseengine/core/app.py — Orchestration Module
 
-`app/analysis.py` is a re-export shim. All domain logic now lives in `src/`. Module-level variables listed below are defined in the `src/` sub-modules and re-exported. `VADER_AVAILABLE` and `STORAGE_AVAILABLE` are re-exported from `src/sentiment.py` and `src/engine.py` respectively.
+`app/analysis.py` is a backward-compat re-export shim. All domain logic now lives in `pulseengine/core/`. Module-level variables listed below are defined in the `pulseengine/core/` sub-modules and re-exported by `pulseengine/core/__init__.py`. `VADER_AVAILABLE` and `STORAGE_AVAILABLE` are re-exported from `pulseengine/core/sentiment.py` and `pulseengine/core/app.py` respectively.
 
 ### Module-Level
 
@@ -344,7 +346,7 @@ Fetches price metrics and momentum for every tracked asset in parallel using `PR
 {category: {asset_name: {"metrics": <price_metrics_dict>, "momentum": <momentum_dict>}}}
 ```
 
-Called by `app/scan.py` during the batch pipeline to pre-build the `price_cache` before the per-asset loop (eliminating ~50–80 redundant yfinance calls). Also available for external use. The dashboard heatmap and category overview use `cached_scan_summary()` in `dashboard/data.py` rather than calling this directly.
+Called by `pulseengine/local/scan.py` during the batch pipeline to pre-build the `price_cache` before the per-asset loop (eliminating ~50–80 redundant yfinance calls). Also available for external use. The dashboard heatmap and category overview use `cached_scan_summary()` in `pulseengine/local/data.py` rather than calling this directly.
 
 ---
 
@@ -358,7 +360,7 @@ Takes no parameters. Fetches news once, then analyses every tracked asset in par
 
 ---
 
-## src/signals.py — Module-Level Constants
+## pulseengine/core/signals.py — Module-Level Constants
 
 | Name | Type | Description |
 |---|---|---|
@@ -375,7 +377,7 @@ Returns a `re.Pattern` that matches `kw` as a whole token. For keywords ending w
 
 ---
 
-## src/news.py — Module-Level Constants and `generate_keywords`
+## pulseengine/core/news.py — Module-Level Constants and `generate_keywords`
 
 | Name | Type | Description |
 |---|---|---|
@@ -478,7 +480,7 @@ These functions live in `dashboard/components.py`.
 
 ---
 
-## storage/storage.py — Internal Variables and Return Structures
+## pulseengine/core/storage.py — Internal Variables and Return Structures
 
 ### Module-Level
 
@@ -534,7 +536,7 @@ These functions live in `dashboard/components.py`.
 
 ---
 
-## app/scan.py — Return Structures
+## pulseengine/local/scan.py — Return Structures
 
 ### Module-Level
 
@@ -593,7 +595,7 @@ Returns the dict written by the most recent `run_scan()` call (same structure as
 
 ---
 
-## app/backtest.py — Return Structures
+## pulseengine/core/backtest.py — Return Structures
 
 ### Module-Level
 
