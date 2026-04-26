@@ -30,6 +30,16 @@ from pulseengine.core import (  # noqa: E402
     fetch_price_history,
 )
 
+_LOCKED_FEATURES: tuple[tuple[str, str], ...] = (
+    ("Arbitrary ticker lookup", "The web demo only shows the 24 tracked assets."),
+    ("Backtesting", "Historical evaluation stays local because it is compute heavy."),
+    ("Historical snapshots", "Snapshots are written only by the local app."),
+    ("Export to CSV / PDF", "Exports are a local-app feature and never run in the demo."),
+    ("FinBERT local model", "No local model downloads or inference run in the web build."),
+    ("Custom RSS feeds", "User-defined feeds are intentionally local-only."),
+    ("Offline mode", "Offline caching and replay stay on the local surface."),
+)
+
 
 st.set_page_config(
     page_title=f"{DASHBOARD_TITLE} | Web Demo",
@@ -43,8 +53,9 @@ st.caption(
 )
 
 st.info(
-    "This demo is stateless: no snapshot storage, no backtesting, no local model\n"
-    "inference, and no arbitrary ticker lookup. Install the local app for the full experience."
+    "This demo is stateless and write-free: no snapshot storage, no backtesting, no local model "
+    "inference, and no arbitrary ticker lookup. We store nothing. Ever. Download the local app "
+    "for the full experience."
 )
 
 
@@ -76,7 +87,10 @@ def _build_live_analysis(asset_name: str, ticker: str, category: str) -> dict:
 
     metrics = compute_price_metrics(history)
     momentum = compute_momentum_metrics(history)
-    articles = fetch_news_articles()
+    try:
+        articles = fetch_news_articles()
+    except DataFetchError:
+        articles = []
     news = correlate_news(asset_name, articles)
     clusters = cluster_articles(news)
     market_ctx = None
@@ -105,16 +119,11 @@ def _build_live_analysis(asset_name: str, ticker: str, category: str) -> dict:
 
 
 def _render_locked_features() -> None:
-    st.subheader("Local-only features")
-    st.markdown(
-        "- Arbitrary ticker lookup\n"
-        "- Backtesting\n"
-        "- Historical snapshots\n"
-        "- Export to CSV / PDF\n"
-        "- Offline mode\n"
-        "- Local model inference"
-    )
-    st.caption("Run the local app to unlock these capabilities.")
+    st.subheader("Download the local app to unlock")
+    st.caption("These capabilities are intentionally disabled in the web demo.")
+    for feature, reason in _LOCKED_FEATURES:
+        st.markdown(f"**{feature}**")
+        st.info(f"{reason} Download the local app to unlock this feature.", icon="🔒")
     st.code("streamlit run pulseengine/local/dashboard.py", language="bash")
 
 
@@ -173,55 +182,59 @@ st.subheader("Market heatmap and category overview")
 st.caption("Computed on demand from live price data only. No state is written to disk.")
 
 if st.button("Build market overview"):
-    overview = fetch_all_metrics_parallel(days=5)
-    rows: list[dict] = []
-    asset_order = [asset for category in TRACKED_ASSETS.values() for asset in category]
-    categories = list(TRACKED_ASSETS.keys())
+    try:
+        overview = fetch_all_metrics_parallel(days=5)
+    except DataFetchError as exc:
+        st.error(f"Could not build the market overview: {exc}")
+    else:
+        rows: list[dict] = []
+        asset_order = [asset for category in TRACKED_ASSETS.values() for asset in category]
+        categories = list(TRACKED_ASSETS.keys())
 
-    matrix: list[list[float | None]] = []
-    labels: list[list[str]] = []
-    for category in categories:
-        row_values: list[float | None] = []
-        row_labels: list[str] = []
-        for asset_name in asset_order:
-            asset_map = TRACKED_ASSETS.get(category, {})
-            if asset_name in asset_map:
-                data = overview.get(category, {}).get(asset_name, {})
-                metrics = data.get("metrics", {})
-                momentum = data.get("momentum", {})
-                rows.append(
-                    {
-                        "Category": category,
-                        "Asset": asset_name,
-                        "Ticker": asset_map[asset_name],
-                        "Price": metrics.get("latest_price"),
-                        "Change 1d": metrics.get("change_1d"),
-                        "RSI": momentum.get("rsi"),
-                        "Trend": metrics.get("trend"),
-                    }
-                )
-                row_values.append(metrics.get("change_1d"))
-                row_labels.append(f"{asset_name}<br>{_format_pct(metrics.get('change_1d'))}")
-            else:
-                row_values.append(None)
-                row_labels.append("")
-        matrix.append(row_values)
-        labels.append(row_labels)
+        matrix: list[list[float | None]] = []
+        labels: list[list[str]] = []
+        for category in categories:
+            row_values: list[float | None] = []
+            row_labels: list[str] = []
+            for asset_name in asset_order:
+                asset_map = TRACKED_ASSETS.get(category, {})
+                if asset_name in asset_map:
+                    data = overview.get(category, {}).get(asset_name, {})
+                    metrics = data.get("metrics", {})
+                    momentum = data.get("momentum", {})
+                    rows.append(
+                        {
+                            "Category": category,
+                            "Asset": asset_name,
+                            "Ticker": asset_map[asset_name],
+                            "Price": metrics.get("latest_price"),
+                            "Change 1d": metrics.get("change_1d"),
+                            "RSI": momentum.get("rsi"),
+                            "Trend": metrics.get("trend"),
+                        }
+                    )
+                    row_values.append(metrics.get("change_1d"))
+                    row_labels.append(f"{asset_name}<br>{_format_pct(metrics.get('change_1d'))}")
+                else:
+                    row_values.append(None)
+                    row_labels.append("")
+            matrix.append(row_values)
+            labels.append(row_labels)
 
-    fig = go.Figure(
-        data=go.Heatmap(
-            z=matrix,
-            x=asset_order,
-            y=categories,
-            text=labels,
-            colorscale="RdYlGn",
-            zmid=0,
-            hovertemplate="%{y} / %{x}<br>Change: %{z:+.2f}%<extra></extra>",
+        fig = go.Figure(
+            data=go.Heatmap(
+                z=matrix,
+                x=asset_order,
+                y=categories,
+                text=labels,
+                colorscale="RdYlGn",
+                zmid=0,
+                hovertemplate="%{y} / %{x}<br>Change: %{z:+.2f}%<extra></extra>",
+            )
         )
-    )
-    fig.update_layout(height=380, margin=dict(l=20, r=20, t=40, b=20))
+        fig.update_layout(height=380, margin=dict(l=20, r=20, t=40, b=20))
 
-    st.plotly_chart(fig, use_container_width=True)
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 else:
     st.caption("Click to load the full market overview.")
