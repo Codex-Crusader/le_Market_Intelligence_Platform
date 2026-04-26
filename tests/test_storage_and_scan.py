@@ -110,7 +110,7 @@ def test_run_scan_dry_run_completes_without_writing(mocker):
             "error": None,
         },
     )
-    save_summary = mocker.patch("app.scan._save_summary")
+    save_summary = mocker.patch("pulseengine.local.scan._save_summary")
 
     result = run_scan(verbose=False, dry_run=True)
 

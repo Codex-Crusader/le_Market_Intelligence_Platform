@@ -119,9 +119,9 @@ pip install -r requirements-dev.txt
 pytest
 
 # 5. Verify the pipeline works
-python -m app.scan --dry-run
+python -m pulseengine.local.scan --dry-run
 
-# 5. Run the dashboard
+# 6. Run the dashboard
 streamlit run pulseengine/local/dashboard.py
 ```
 
@@ -140,8 +140,8 @@ Open the project folder in VS Code. The configurations in `.vscode/launch.json` 
 | Configuration | Equivalent command |
 |---|---|
 | Dashboard (Streamlit) | `streamlit run pulseengine/local/dashboard.py` |
-| Scan (Dry Run) | `python -m app.scan --dry-run` |
-| Scan (Full) | `python -m app.scan` |
+| Scan (Dry Run) | `python -m pulseengine.local.scan --dry-run` |
+| Scan (Full) | `python -m pulseengine.local.scan` |
 | Analysis CLI | `python -m app.analysis` |
 | Tests (pytest) | `pytest tests/ -v --tb=short` |
 
@@ -156,8 +156,8 @@ The run configurations in `.idea/runConfigurations/` are loaded automatically by
 | Configuration | Equivalent command |
 |---|---|
 | Dashboard | `python -m streamlit run pulseengine/local/dashboard.py` |
-| Scan (Dry Run) | `python -m app.scan --dry-run` |
-| Scan (Full) | `python -m app.scan` |
+| Scan (Dry Run) | `python -m pulseengine.local.scan --dry-run` |
+| Scan (Full) | `python -m pulseengine.local.scan` |
 | Analysis CLI | `python -m app.analysis` |
 | Tests | `pytest tests/ -v --tb=short` |
 
@@ -184,10 +184,10 @@ All code must follow PEP 8. Key conventions used in this codebase:
 
 ### Style Rules Specific to This Project
 
-- Do not add `print()` statements to `app/analysis.py`, `dashboard/main.py`, `storage/storage.py`, `app/backtest.py`, or `app/scan.py`. Use the `logging` module
-- Do not use `st.write()` for debug output in `dashboard/main.py`. All debug output belongs in log files
+- Do not add `print()` statements to `pulseengine/core/app.py`, `pulseengine/local/dashboard.py`, `pulseengine/core/storage.py`, `pulseengine/core/backtest.py`, or `pulseengine/local/scan.py`. Use the `logging` module
+- Do not use `st.write()` for debug output in `pulseengine/local/dashboard.py`. All debug output belongs in log files
 - Exception handling must be specific. Broad `except Exception` clauses are only acceptable at the outermost layer where a crash must be prevented from reaching the user interface (e.g. storage writes inside the dashboard)
-- All `@st.cache_data` and `@st.cache_resource` functions must include `ttl` or use the singleton pattern documented in `dashboard/main.py`
+- All `@st.cache_data` and `@st.cache_resource` functions must include `ttl` or use the singleton pattern documented in `pulseengine/local/dashboard.py`
 
 ---
 
@@ -214,7 +214,7 @@ In addition to the automated tests, verify the following manually before submitt
 
 1. **Dry run passes without errors**
    ```bash
-  python -m app.scan --dry-run
+  python -m pulseengine.local.scan --dry-run
    ```
 
 2. **Dashboard loads without warnings or errors in the terminal**
@@ -228,9 +228,9 @@ In addition to the automated tests, verify the following manually before submitt
 
 5. **No FutureWarnings or DeprecationWarnings** appear in the terminal output
 
-If you are modifying signal scoring logic (`compute_signal_score` in `src/signals.py`), also verify that:
+If you are modifying signal scoring logic (`compute_signal_score` in `pulseengine/core/signals.py`), also verify that:
 - Signal scores remain within the -10 to +10 range for a representative set of assets
-- Signal labels map correctly to the configured thresholds in `config/settings.py`
+- Signal labels map correctly to the configured thresholds in `pulseengine/core/config.py`
 
 ---
 
@@ -258,7 +258,7 @@ The following areas are particularly welcome for contribution:
 |---|---|
 | Additional assets | New tickers can be added to `TRACKED_ASSETS` in `config/settings.py` along with keywords in `ASSET_KEYWORDS` and peers in `SECTOR_PEERS` |
 | Additional news feeds | New RSS feeds can be added to `NEWS_FEEDS` in `config/settings.py` with a corresponding entry in `SOURCE_WEIGHTS` |
-| Test suite expansion | The current suite is intentionally minimal (14 tests). As the codebase stabilises, contributions that add meaningful invariant or integration tests are welcome — see `tests/MAINTENANCE.md` for what makes a good test here |
+| Test suite expansion | The current suite has 54 tests covering core invariants, pipeline smoke tests, edge cases, and storage/scan integration. Contributions that add meaningful property-based or integration tests are welcome — see `tests/MAINTENANCE.md` for what makes a good test here |
 | Export functionality | CSV or Excel export of the category overview table |
 | Alert system | Email or webhook notification when a signal crosses a configurable threshold |
 | Improved deduplication | Replace Jaccard similarity with a more robust semantic deduplication approach |
@@ -270,8 +270,8 @@ The following areas are particularly welcome for contribution:
 
 The following design decisions are intentional and should not be changed without opening an issue for discussion first:
 
-- **All configuration in `config/settings.py`**: Do not hardcode values in any other file
-- **`@st.cache_resource` for the scan state singleton**: Changing this to a module-level variable would recreate the lock on every Streamlit rerun
+- **All configuration in `pulseengine/core/config.py`**: Do not hardcode values in any other file. `config/settings.py` is a backward-compat shim; new constants go in the canonical location
+- **`@st.cache_resource` for the scan state singleton**: Changing this to a module-level variable in `pulseengine/local/dashboard.py` would recreate the lock on every Streamlit rerun
 - **`fill_method=None` on `pct_change()`**: This is an explicit fix for a pandas FutureWarning. Do not revert to the default
 - **Daemon threads for background scanning**: The scan must not block the dashboard UI thread
 - **Tiered storage retention**: The three-tier retention policy (full / reduced / deleted) is intentional to balance disk usage against backtesting depth

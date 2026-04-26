@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.3.1] — 2026-04-26
+### "Local Surface Migration"
+
+### Changed
+- `pulseengine/local/dashboard.py`, `components.py`, `styles.py`, `data.py` — replaced forward shims with the full production implementations. All imports updated from legacy shim paths (`app.*`, `config.*`, `dashboard.*`, `storage.*`) to canonical `pulseengine.core.*` and `pulseengine.core.config.*`.
+- `pulseengine/local/scan.py` — replaced thin CLI wrapper with the full batch scan pipeline (previously only in `app/scan.py`). Now the canonical implementation; `app/scan.py` is a reverse shim.
+- `dashboard/main.py` — converted from production script to reverse shim; re-executes `pulseengine/local/dashboard.py` so `streamlit run dashboard/main.py` still works unchanged.
+- `dashboard/components.py`, `dashboard/styles.py`, `dashboard/data.py` — converted to reverse shims pointing to `pulseengine.local.*`.
+- `app/scan.py` — converted to reverse shim; re-exports `run_scan` and `load_last_scan_summary` from `pulseengine.local.scan`.
+- `tests/test_storage_and_scan.py` — updated mock patch target from `app.scan._save_summary` to `pulseengine.local.scan._save_summary` to reflect canonical module location.
+
+### Added
+- Export to CSV / PDF and Offline Mode placeholders added to the local dashboard sidebar (greyed-out buttons under "Export & Offline (Coming in v0.5)" expander). Roadmap-listed features are no longer silently absent from the UI.
+
+### Notes
+- `python -m app.scan` and `streamlit run dashboard/main.py` remain functional via the reverse shims for backward compatibility.
+- Canonical scan CLI: `python -m pulseengine.local.scan`
+- No logic, signal model, or API changes. Pure structural migration completing the v0.3 repo restructure.
+
+---
+
 ## [0.3.0] — 2026-04-22
 ### "Foundation Split + Arbitrary Tickers"
 
