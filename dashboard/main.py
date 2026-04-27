@@ -12,7 +12,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(_root))
 
-_canonical = Path(__file__).resolve().parents[1] / "pulseengine" / "local" / "dashboard.py"
+_canonical = _root / "pulseengine" / "local" / "dashboard.py"
 exec(compile(_canonical.read_text(encoding="utf-8"), str(_canonical), "exec"))  # noqa: S102
