@@ -173,6 +173,40 @@ def _maybe_trigger_scan() -> None:
     ).start()
 
 
+# ── Navigation history ─────────────────────────────────────────────────────────
+
+# Keys that trigger a history push when they change (the "page identity").
+_NAV_DETECT_KEYS = ("_selected_category", "_selected_asset", "_confirmed_custom_ticker")
+# Keys saved in each snapshot (includes lazy-load state so Back restores it).
+_NAV_SNAPSHOT_KEYS = (*_NAV_DETECT_KEYS, "_news_for", "_live_for", "_custom_ticker_input")
+
+
+def _push_nav_if_changed() -> None:
+    """Push a snapshot of the previous page to history when navigation occurred."""
+    # If we're mid-restore, just clear the flag and skip — the restored state
+    # is already the truth; pushing it would create a spurious duplicate entry.
+    if st.session_state.get("_nav_restoring"):
+        st.session_state["_nav_restoring"] = False
+        return
+    last = st.session_state.get("_last_nav_snapshot")
+    current = {k: st.session_state.get(k) for k in _NAV_SNAPSHOT_KEYS}
+    if last is not None and any(last.get(k) != current.get(k) for k in _NAV_DETECT_KEYS):
+        history: list = st.session_state.setdefault("_nav_history", [])
+        history.append(last)
+        if len(history) > 20:
+            history.pop(0)
+    st.session_state["_last_nav_snapshot"] = current
+
+
+def _restore_nav_state(snapshot: dict) -> None:
+    """Write a history snapshot back into session_state and flag the restore."""
+    st.session_state["_nav_restoring"] = True
+    for k, v in snapshot.items():
+        if v is None:
+            st.session_state.pop(k, None)
+        else:
+            st.session_state[k] = v
+
 
 st.sidebar.checkbox(
     "Enable auto background scan",
@@ -223,7 +257,7 @@ st.sidebar.markdown("---")
 
 st.sidebar.markdown("**Ticker Lookup**")
 custom_ticker_raw = st.sidebar.text_input(
-    "Ticker symbol (e.g. PLTR, ARM, TSMC)",
+    "Ticker symbol (e.g. PLTR, ARM, TSM)",
     key="_custom_ticker_input",
     placeholder="e.g. PLTR, ARM, TSM, BRK-B",
 )
@@ -261,26 +295,57 @@ if _invalid_sym:
 
 st.sidebar.markdown("---")
 
+# Detect navigation changes and maintain history, then render the Back button.
+_push_nav_if_changed()
+_nav_history: list = st.session_state.get("_nav_history", [])
+
+
+def _on_back_click() -> None:
+    # on_click runs between reruns — before any widgets are instantiated —
+    # so writing widget-backed keys here is always safe.
+    history: list = st.session_state.get("_nav_history", [])
+    if not history:
+        return
+    snapshot = history.pop()
+    st.session_state["_nav_history"] = history
+    _restore_nav_state(snapshot)
+
+
+
 _confirmed = st.session_state.get("_confirmed_custom_ticker", "")
 using_custom_ticker = bool(_confirmed)
+
+# Always render category/asset selectors so the sidebar layout is stable.
+# When a custom ticker is active they are disabled and their values unused.
+categories = list(TRACKED_ASSETS.keys())
+default_cat_idx = categories.index(DEFAULT_CATEGORY) if DEFAULT_CATEGORY in categories else 0
+selected_category = (
+    st.sidebar.selectbox(
+        "Category", categories, index=default_cat_idx,
+        key="_selected_category", disabled=using_custom_ticker,
+    )
+    or categories[0]
+)
+
+asset_names = list(TRACKED_ASSETS[selected_category].keys())
+if not asset_names:
+    st.error(f"No assets configured for category: {selected_category}")
+    st.stop()
+# Guard: if a restored asset value isn't valid for the current category, drop it.
+if st.session_state.get("_selected_asset") not in asset_names:
+    st.session_state.pop("_selected_asset", None)
+selected_asset = (
+    st.sidebar.selectbox(
+        "Asset", asset_names, key="_selected_asset", disabled=using_custom_ticker,
+    )
+    or asset_names[0]
+)
 
 if using_custom_ticker:
     selected_category = "Custom Ticker"
     selected_asset = _confirmed
     ticker = _confirmed
 else:
-    categories = list(TRACKED_ASSETS.keys())
-    default_cat_idx = categories.index(DEFAULT_CATEGORY) if DEFAULT_CATEGORY in categories else 0
-    selected_category = (
-        st.sidebar.selectbox("Category", categories, index=default_cat_idx)
-        or categories[0]
-    )
-
-    asset_names = list(TRACKED_ASSETS[selected_category].keys())
-    if not asset_names:
-        st.error(f"No assets configured for category: {selected_category}")
-        st.stop()
-    selected_asset = st.sidebar.selectbox("Asset", asset_names) or asset_names[0]
     ticker = TRACKED_ASSETS[selected_category][selected_asset]
 
 st.sidebar.markdown("---")
@@ -360,6 +425,18 @@ st.sidebar.markdown(
 
 
 # ── Main panel ─────────────────────────────────────────────────────────────────
+
+# The span below is an invisible CSS anchor. The immediately-following div
+# (rendered by st.button) is targeted by a :has() sibling selector in styles.py
+# and fixed-positioned to the top-left corner of the viewport.
+st.markdown('<span id="pe-back-slot-marker"></span>', unsafe_allow_html=True)
+st.button(
+    "← Back",
+    key="_back_btn_main",
+    disabled=not _nav_history,
+    help="Return to the previous asset you were viewing",
+    on_click=_on_back_click,
+)
 
 _stale = is_data_stale(_summary)
 if _stale:
