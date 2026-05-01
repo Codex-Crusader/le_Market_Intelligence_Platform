@@ -380,6 +380,35 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 .bt-hit  { color: var(--green-text); }
 .bt-miss { color: var(--red-text);   }
 
+/* ── Back button — fixed top-left ─────────────────────────────────────────── */
+/* The span #pe-back-slot-marker is injected by st.markdown() immediately      */
+/* before the st.button() call in dashboard.py.  Both render as block-level   */
+/* siblings inside Streamlit's vertical block.  The :has() selector pinpoints  */
+/* the wrapper that contains the marker two DOM levels deep, and the adjacent  */
+/* sibling combinator (+) then grabs the wrapper holding the button.           */
+div:has(> * > #pe-back-slot-marker) + div {
+  position: fixed !important;
+  top: 60px !important;
+  left: calc(21rem + 1rem) !important;  /* sidebar default width + gutter */
+  z-index: 1000 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+div:has(> * > #pe-back-slot-marker) + div .stButton > button {
+  width: auto !important;
+  min-width: 0 !important;
+  padding: 4px 14px !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0.07em !important;
+  border-color: var(--border-rule) !important;
+}
+div:has(> * > #pe-back-slot-marker) + div .stButton > button:not(:disabled):hover {
+  border-color: var(--gold-dim) !important;
+  background: var(--gold-faint) !important;
+}
+
 /* ── Buttons ──────────────────────────────────────────────────────────────── */
 .stButton > button {
   font-family: var(--font-body) !important;
