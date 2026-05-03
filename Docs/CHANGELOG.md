@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [Unreleased]
+### "Back Button + Navigation History"
+
+### Added
+- Session-state navigation history stack in `pulseengine/local/dashboard.py`:
+  - `_push_nav_if_changed()` — called on every rerun; detects changes in selected category, asset, or custom ticker and pushes a snapshot of the previous page state onto `st.session_state["_nav_history"]` (capped at 20 entries).
+  - `_restore_nav_state(snapshot)` — writes a history snapshot back into session state and sets a `_nav_restoring` guard flag so the restore does not generate a spurious duplicate history entry on the next rerun.
+  - `_on_back_click()` — `on_click` handler for the Back button; pops the most recent snapshot and calls `_restore_nav_state`.
+  - Module-level tuples `_NAV_DETECT_KEYS` and `_NAV_SNAPSHOT_KEYS` defining which session-state keys constitute page identity and which are saved in each history snapshot.
+- **← Back button** rendered fixed-positioned at the top-left of the main panel via a CSS `#pe-back-slot-marker` anchor span. Disabled when the history stack is empty; enabled as soon as the user has navigated away from the initial view. Implemented with `st.button("← Back", key="_back_btn_main", on_click=_on_back_click)`.
+- Back button CSS in `pulseengine/local/styles.py`: a `:has(> * > #pe-back-slot-marker) + div` selector fixed-positions the button wrapper to `top: 60px; left: calc(21rem + 1rem)` with `z-index: 1000`, matching the sidebar default width and gutter.
+
+### Notes
+- Navigation history is scoped to `st.session_state` — it resets on page refresh but persists across asset switches within a single session.
+- No changes to the signal model, data pipeline, storage, or API.
+
+---
+
 ## [0.3.1] — 2026-04-26
 ### "Local Surface Migration"
 

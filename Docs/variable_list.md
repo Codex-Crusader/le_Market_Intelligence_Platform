@@ -406,17 +406,24 @@ Industry and sector fields are intentionally excluded — terms like `"Technolog
 
 ---
 
-## dashboard/ — Session State, Singleton State, and UI Variables
+## pulseengine/local/dashboard.py — Session State, Singleton State, and UI Variables
 
-### Module-Level
+### Module-Level Constants
 
 | Name | Type | Description |
 |---|---|---|
-| `BACKTEST_AVAILABLE` | `bool` | `True` if `app.backtest` module imported successfully. Defined in `dashboard/components.py`. |
-| `STORAGE_AVAILABLE` | `bool` | `True` if `storage.get_historical_features` imported successfully. Defined in `dashboard/components.py`. |
+| `_NAV_DETECT_KEYS` | `tuple[str, ...]` | Session-state keys whose changes trigger a history push: `_selected_category`, `_selected_asset`, `_confirmed_custom_ticker`. |
+| `_NAV_SNAPSHOT_KEYS` | `tuple[str, ...]` | Keys saved in each history snapshot (superset of `_NAV_DETECT_KEYS`; also includes `_news_for`, `_live_for`, `_custom_ticker_input`). |
 | `_EGG_LIMIT` | `int` | Click count threshold for the easter egg (5). |
 | `_EGG_WINDOW` | `float` | Time window in seconds for easter egg click detection (2.0 s). |
 | `_EGG_URL` | `str` | URL opened when the easter egg triggers. |
+
+### Module-Level Constants (`pulseengine/local/components.py`)
+
+| Name | Type | Description |
+|---|---|---|
+| `_BACKTEST_AVAILABLE` | `bool` | `True` if `pulseengine.core.backtest` imported successfully. Controls whether the backtest section renders. |
+| `_STORAGE_AVAILABLE` | `bool` | `True` if `pulseengine.core.storage.get_historical_features` imported successfully. Controls whether the historical context section renders. |
 
 ### Singleton Scan State (via `@st.cache_resource`)
 
@@ -428,55 +435,66 @@ Industry and sector fields are intentionally excluded — terms like `"Technolog
 | `last_finished` | `float` | `time.time()` value when the most recent scan completed. |
 | `error` | `str` | Error message string if the last scan raised an exception, empty string otherwise. |
 | `assets_done` | `int` | Number of assets successfully processed in the last scan. |
+| `errors_count` | `int` | Number of per-asset errors recorded during the last scan. |
 
 ### `st.session_state` Keys
 
 | Key | Type | Description |
 |---|---|---|
 | `_scan_check_ts` | `float` | `time.time()` of the last call that passed the 60-second rate-limit guard in `_maybe_trigger_scan`. |
+| `_scan_refresh_epoch` | `int` | Monotonically increasing counter; incrementing it busts `cached_scan_summary()`. |
+| `_scan_rerun_done` | `bool` | Guards the one-time rerun triggered when a background scan finishes. |
+| `_enable_auto_scan` | `bool` | Sidebar checkbox controlling whether `_maybe_trigger_scan` is called each rerun. |
+| `_confirmed_custom_ticker` | `str` | Validated Yahoo Finance ticker entered by the user, or empty string. |
+| `_ticker_invalid` | `str` | Ticker symbol that failed validation; drives the "No data found" error banner. |
+| `_custom_ticker_input` | `str` | Raw text from the ticker input widget. |
+| `_selected_category` | `str` | Category chosen in sidebar selectbox. |
+| `_selected_asset` | `str` | Asset chosen in sidebar selectbox. |
+| `_news_for` | `str` | Ticker for which the news feed has been loaded; drives the deferred news section. |
+| `_live_for` | `str` | Ticker for which live analysis has been loaded; drives the deferred live-analysis expander. |
+| `_nav_history` | `list[dict]` | Stack of page-state snapshots. Each entry holds the `_NAV_SNAPSHOT_KEYS` values from a previous rerun. Capped at 20 entries. |
+| `_last_nav_snapshot` | `dict` | Snapshot of the current page's `_NAV_SNAPSHOT_KEYS` values, saved at the end of `_push_nav_if_changed()` for comparison on the next rerun. |
+| `_nav_restoring` | `bool` | Set to `True` by `_restore_nav_state()`. Tells `_push_nav_if_changed()` on the immediately following rerun to skip the push, preventing the restore itself from generating a spurious history entry. |
+| `_egg_clicks` | `list[float]` | Timestamps of recent easter egg button clicks within the detection window. |
 
-### Cached Data Functions
+### Cached Data Functions (`pulseengine/local/data.py`)
 
 | Function | TTL | Returns |
 |---|---|---|
 | `cached_news()` | `NEWS_CACHE_TTL` (300 s) | Deduplicated article list from all 12 feeds |
-| `cached_history(symbol)` | `PRICE_CACHE_TTL` (90 s) | OHLCV DataFrame for the given ticker |
-| `cached_scan_summary()` | `PRICE_CACHE_TTL` (90 s) | Nested summary dict loaded from `_scan_summary.json.gz`; used to populate the market heatmap and category overview |
+| `cached_scan_summary(epoch)` | `PRICE_CACHE_TTL` (90 s) | Nested summary dict loaded from `_scan_summary.json.gz`; used to populate the market heatmap and category overview |
+| `cached_live_analysis(...)` | `PRICE_CACHE_TTL` (90 s) | Full `analyse_asset` result dict for the selected ticker |
+| `cached_generated_keywords(ticker)` | `PRICE_CACHE_TTL` (90 s) | Keyword list from `generate_keywords` for a custom ticker |
 
-### UI Helper Functions
-
-These functions live in `dashboard/components.py`.
+### UI Rendering Functions (`pulseengine/local/components.py`)
 
 | Function | Description |
 |---|---|
-| `_render_article(item)` | Renders a single correlated news article card in the dashboard |
-| `_mover_html(items, color)` | Returns an HTML string for a top-movers row in the heatmap |
-| `_color_pct(val)` | Returns a colour-coded HTML span for a percentage change value |
-| `_color_rsi(val)` | Returns a colour-coded HTML span for an RSI value |
-| `_auto_refresher()` | `@st.fragment` — handles the 90-second auto-refresh countdown and `st.rerun` trigger |
+| `sidebar_header_html()` | Returns HTML for the sidebar logo and title header |
+| `render_scan_status_sidebar(scan_state, summary)` | Renders the scan status badge and last-scan timestamp in the sidebar |
+| `render_signal_legend_sidebar()` | Renders the signal score legend in the sidebar |
+| `render_mover_rows(gainers, losers, summary_date)` | Renders the top movers (gainers and losers) in the sidebar |
+| `render_data_status_banner(scan_state, stale, summary)` | Renders a banner when a scan is running or data is stale |
+| `render_signal_card(snap, category, asset, chg_1d, is_significant)` | Renders the main signal card with score, label, and alert badge |
+| `render_why_box(snap)` | Renders the "why it matters" narrative box |
+| `render_snapshot_metrics(snap, chg_1d)` | Renders the snapshot-data metric cards |
+| `render_article(item)` | Renders a single correlated news article card |
+| `render_news_section(clusters, suppressed_count, total, news)` | Renders the full news section with clusters and article cards |
+| `render_live_analysis(history, asset, signal, explanation, snap, is_significant)` | Renders the price chart, live signal, explanation, backtest, and historical context |
+| `render_heatmap(summary, summary_date)` | Renders the market heatmap Plotly chart |
+| `render_category_overview(cat_data, summary_date)` | Renders the category overview table |
 
 ### Per-Rerun Variables (main panel)
 
 | Variable | Type | Description |
 |---|---|---|
-| `selected_category` | `str` | Category chosen in sidebar selectbox |
-| `selected_asset` | `str` | Asset chosen in sidebar selectbox |
+| `selected_category` | `str` | Category chosen in sidebar selectbox (or `"Custom Ticker"` when using a custom ticker) |
+| `selected_asset` | `str` | Asset chosen in sidebar selectbox (or the confirmed custom ticker symbol) |
 | `ticker` | `str` | Yahoo Finance ticker for `selected_asset` |
-| `history` | `pd.DataFrame` | Price history for `selected_asset` |
-| `articles` | `list[dict]` | Full deduplicated news pool |
-| `metrics` | `dict` | Price metrics for `selected_asset` |
-| `momentum` | `dict` | Momentum metrics for `selected_asset` |
-| `news` | `list[dict]` | News correlated with `selected_asset` |
-| `clusters` | `dict` | Clustered news output |
-| `disp_clust` | `dict` | Top 2 display clusters for UI rendering |
-| `market_ctx` | `Optional[dict]` | Market context (only when sidebar checkbox enabled) |
-| `signal` | `dict` | Signal score and label |
-| `explanation` | `dict` | Full explanation with factors and confidence |
-| `sig_score` | `float` | `signal["score"]` extracted for rendering |
-| `sig_label` | `str` | `signal["label"]` extracted for rendering |
-| `conf` | `str` | `explanation["confidence"]` extracted for rendering |
-| `factors` | `list[dict]` | `explanation["factors"]` extracted for rendering |
-| `primary_driver` | `Optional[dict]` | First factor from event or context factors list |
+| `using_custom_ticker` | `bool` | True when `_confirmed_custom_ticker` is set and non-empty |
+| `snap` | `dict` | Latest snapshot entry from `_summary_results` for the selected asset |
+| `chg_1d` | `Optional[float]` | 1-day price change extracted from `snap` |
+| `is_significant` | `bool` | True if `abs(chg_1d) >= PRICE_CHANGE_THRESHOLD` |
 
 ---
 

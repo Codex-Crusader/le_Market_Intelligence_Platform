@@ -77,6 +77,7 @@ Historical snapshots are persisted to compressed JSON files on disk. A backgroun
 | Backtesting | Hit-rate evaluation by signal strength and label |
 | Retention policy | Full detail 7 days, reduced detail 30 days, deleted after 60 days |
 | Dashboard | Streamlit wide-layout with auto-refresh every 90 seconds |
+| Navigation history | Session-state back-navigation stack; ← Back button fixed to top-left of main panel |
 | Top movers | Live 24h gainers and losers in sidebar |
 | Market heatmap | Category-level 24h change heatmap |
 | Category overview | Tabular summary of all assets in selected category |
@@ -267,7 +268,7 @@ On startup the dashboard:
 4. Displays `System initializing — full market scan running in background...` while the scan is active
 5. Fetches price and news data for the currently selected asset and renders the full analysis panel
 
-You can also enter any valid Yahoo Finance ticker in the sidebar (for example `PLTR`, `ARM`, `TSM`, `BRK-B`) to run arbitrary ticker analysis locally without editing `config/settings.py`.
+You can also enter any valid Yahoo Finance ticker in the sidebar (for example `PLTR`, `ARM`, `TSM`, `BRK-B`) to run arbitrary ticker analysis locally without editing `pulseengine/core/config.py`.
 For custom tickers, keywords are auto-generated from ticker metadata and the dashboard applies low-news-confidence safeguards when coverage is sparse.
 
 The sidebar shows the scan status (running / N minutes ago / pending first run) and a manual `Run full scan now` button.
@@ -280,14 +281,16 @@ The scan pipeline can be executed independently of the dashboard:
 
 ```bash
 # Full verbose scan — saves snapshots and summary
-python -m app.scan
+python -m pulseengine.local.scan
 
 # Suppress per-asset log lines
-python -m app.scan --quiet
+python -m pulseengine.local.scan --quiet
 
 # Validate pipeline without writing any files
-python -m app.scan --dry-run
+python -m pulseengine.local.scan --dry-run
 ```
+
+Legacy shim commands (`python -m app.scan`) remain functional via backward-compat re-exports.
 
 Output is written to:
 - `market_data/<AssetName>_YYYYMMDD.json.gz` — per-asset daily snapshot
@@ -297,7 +300,7 @@ Output is written to:
 
 ## Configuration
 
-All tunable values are in `config/settings.py`. No magic numbers exist anywhere else in the codebase.
+All tunable values are in `pulseengine/core/config.py`. No magic numbers exist anywhere else in the codebase. `config/settings.py` is a backward-compat shim pointing to the canonical location.
 
 | Constant | Default | Description |
 |---|---|---|
@@ -386,7 +389,7 @@ market_data/
 The backtesting module evaluates historical signal accuracy by comparing the signal score on day N with the actual price direction from day N to day N+1.
 
 ```python
-from app.backtest import evaluate_signal_accuracy
+from pulseengine.core.backtest import evaluate_signal_accuracy
 result = evaluate_signal_accuracy("Gold", lookback=20)
 print(result["hit_rate"])
 ```
@@ -403,69 +406,75 @@ Results are broken down by:
 
 ```
 pulse_engine_1/
-  app/
+  pulseengine/                   Canonical package root (version 0.3.x)
     __init__.py
-    analysis.py         Re-export shim + CLI entry point (wraps src/ modules)
-    scan.py             Full-market batch scan pipeline
-    backtest.py         Historical signal accuracy evaluation
-  dashboard/
-    __init__.py
-    main.py             Streamlit dashboard controller
-    components.py       Reusable UI rendering functions
-    styles.py           CSS theming for the dashboard
-    data.py             Cached data loaders and staleness helpers
-  storage/
-    __init__.py
-    storage.py          Compressed snapshot persistence and retention
-  config/
-    __init__.py
-    settings.py         All configuration constants
-  src/
-    __init__.py
-    engine.py           Pipeline orchestration (analyse_asset, run_full_scan)
-    price.py            Yahoo Finance fetching and price metrics
-    news.py             RSS fetching, deduplication, and clustering
-    signals.py          Signal scoring, event detection, news correlation
-    context.py          Sector and market context analysis
-    explanation.py      Human-readable narrative generation
-    sentiment.py        VADER + financial-lexicon sentiment scoring
-    errors.py           Custom exception types (PipelineError hierarchy)
+    core/                        Shared headless analysis engine
+      __init__.py                Public API — re-exports all core symbols
+      app.py                     Pipeline orchestration (analyse_asset, run_full_scan)
+      config.py                  All configuration constants
+      price.py                   Yahoo Finance fetch and price metrics
+      news.py                    RSS fetch, deduplication, keyword generation
+      signals.py                 Signal scoring, event detection, news correlation
+      sentiment.py               VADER + financial lexicon sentiment scoring
+      context.py                 Sector and market context analysis
+      explanation.py             Human-readable narrative generation
+      storage.py                 Compressed snapshot persistence and retention
+      backtest.py                Historical signal accuracy evaluation
+      errors.py                  PipelineError custom exception hierarchy
+    local/                       Full-featured local app surface
+      __init__.py
+      dashboard.py               Streamlit dashboard controller
+      scan.py                    Full-market batch scan pipeline
+      components.py              Reusable UI rendering functions
+      styles.py                  CSS theming for the dashboard
+      data.py                    Cached data loaders and staleness helpers
+    web/                         Restricted stateless demo surface
+      __init__.py
+      dashboard.py               Streamlit web demo (no file I/O, no state persistence)
+  app/                           Backward-compat shim — re-exports from pulseengine.core
+  config/                        Backward-compat shim — re-exports from pulseengine.core.config
+  dashboard/                     Backward-compat shim — re-exports from pulseengine.local
+  src/                           Backward-compat shim — re-exports from pulseengine.core
+  storage/                       Backward-compat shim — re-exports from pulseengine.core.storage
   assets/
     icons/
       favicon.ico
     logo/
       pulseengine_logo.png
   tests/
-    conftest.py              Shared fixtures
-    test_core.py             Sanity and invariant tests for pure functions
-    test_pipeline.py         Smoke tests for end-to-end pipelines
-    test_logic_coverage.py   Edge case coverage for scoring, sentiment, dedup
-    test_storage_and_scan.py Storage round-trip, retention, dry-run scan, backtest
-    MAINTENANCE.md           Guide for updating the test suite
+    conftest.py                  Shared fixtures
+    test_core.py                 Sanity and invariant tests for pure functions
+    test_pipeline.py             Smoke tests for end-to-end pipelines
+    test_logic_coverage.py       Edge case coverage for scoring, sentiment, dedup
+    test_storage_and_scan.py     Storage round-trip, retention, dry-run scan, backtest
+    test_optimisation.py         Optimisation-related tests
+    test_web_surface.py          Web demo surface tests
+    MAINTENANCE.md               Guide for updating the test suite
   Docs/
-    code_flow.md        Detailed execution flow diagrams
-    variable_list.md    Complete variable and constant reference
-    ROADMAP.md          Project direction, milestones, and contributor lanes
-    CHANGELOG.md        All notable changes by version
-    DISCLAIMER.md       Legal and financial disclaimer
-    CONTRIBUTORS.md     List of project contributors
-  requirements.txt      Python dependencies
-  requirements-dev.txt  Test dependencies (pytest, pytest-mock)
-  install.py            Cross-platform local installer (creates .venv, installs deps, generates launch scripts)
-  install.sh            macOS/Linux wrapper — detects compatible Python 3.11–3.14 and delegates to install.py
-  install.ps1           Windows PowerShell wrapper — same Python detection, delegates to install.py
-  launch.bat            Windows batch launcher (generated by install.py, git-ignored)
-  launch.ps1            Windows PowerShell launcher (generated by install.py, git-ignored)
-  launch.sh             macOS/Linux launcher with executable bit set (generated by install.py, git-ignored)
-  README.md             This file
-  CONTRIBUTING.md       Contribution guidelines
-  LICENSE               MIT License
-  .gitignore            Git ignore rules
+    code_flow.md                 Detailed execution flow diagrams
+    variable_list.md             Complete variable and constant reference
+    ROADMAP.md                   Project direction, milestones, and contributor lanes
+    CHANGELOG.md                 All notable changes by version
+    DISCLAIMER.md                Legal and financial disclaimer
+    CONTRIBUTORS.md              List of project contributors
+  requirements.txt               Python dependencies
+  requirements-dev.txt           Test dependencies (pytest, pytest-mock, ruff, mypy)
+  install.py                     Cross-platform local installer (creates .venv, installs deps, generates launch scripts)
+  install.sh                     macOS/Linux wrapper — detects compatible Python 3.11–3.14 and delegates to install.py
+  install.ps1                    Windows PowerShell wrapper — same Python detection, delegates to install.py
+  launch.bat                     Windows batch launcher (generated by install.py, git-ignored)
+  launch.ps1                     Windows PowerShell launcher (generated by install.py, git-ignored)
+  launch.sh                      macOS/Linux launcher with executable bit set (generated by install.py, git-ignored)
+  README.md                      This file
+  CONTRIBUTING.md                Contribution guidelines
+  LICENSE                        MIT License
+  .gitignore                     Git ignore rules
+  Dockerfile                     Container build
   .vscode/
-    launch.json         VS Code debug/run configurations
+    launch.json                  VS Code debug/run configurations
   .idea/
-    runConfigurations/  PyCharm run/debug configurations
-  market_data/          Runtime snapshot directory (git-ignored)
+    runConfigurations/           PyCharm run/debug configurations
+  market_data/                   Runtime snapshot directory (git-ignored)
 ```
 
 ---

@@ -175,12 +175,12 @@ All code must follow PEP 8. Key conventions used in this codebase:
 - **Indentation**: 4 spaces, no tabs
 - **Naming**:
   - `snake_case` for functions and variables
-  - `UPPER_SNAKE_CASE` for module-level constants in `config/settings.py`
+  - `UPPER_SNAKE_CASE` for module-level constants in `pulseengine/core/config.py`
   - `_leading_underscore` for private/internal functions
 - **Type hints**: Use type hints on all function signatures. Use `Optional[T]` from `typing` for nullable returns
 - **Docstrings**: One-line docstrings for simple functions, multi-line for public functions with multiple parameters or complex return values
 - **Imports**: Standard library first, third-party second, local last — each group separated by a blank line
-- **No magic numbers**: All tunable values must live in `config/settings.py`, never hardcoded in `app/analysis.py`, `dashboard/main.py`, or elsewhere
+- **No magic numbers**: All tunable values must live in `pulseengine/core/config.py`, never hardcoded in `pulseengine/core/app.py`, `pulseengine/local/dashboard.py`, or elsewhere. `config/settings.py` is a backward-compat shim pointing to the canonical location
 
 ### Style Rules Specific to This Project
 
@@ -240,7 +240,7 @@ If you are modifying signal scoring logic (`compute_signal_score` in `pulseengin
 2. **Commit messages**: Use the imperative mood. Example: `fix pct_change FutureWarning in compute_price_metrics`, not `fixed` or `fixing`
 3. **Scope**: One logical change per pull request. Do not bundle unrelated changes
 4. **Description**: Explain *what* changed and *why*. Reference the issue number if applicable (`Closes #42`)
-5. **config/settings.py changes**: Any new constant added to `config/settings.py` must be documented in the pull request description with its purpose, default value, and acceptable range
+5. **pulseengine/core/config.py changes**: Any new constant added to `pulseengine/core/config.py` must be documented in the pull request description with its purpose, default value, and acceptable range
 6. **Breaking changes**: Label the PR `breaking change` and describe the migration path in the PR description
 7. **Do not commit**:
    - `market_data/` contents
@@ -256,8 +256,8 @@ The following areas are particularly welcome for contribution:
 
 | Area | Description |
 |---|---|
-| Additional assets | New tickers can be added to `TRACKED_ASSETS` in `config/settings.py` along with keywords in `ASSET_KEYWORDS` and peers in `SECTOR_PEERS` |
-| Additional news feeds | New RSS feeds can be added to `NEWS_FEEDS` in `config/settings.py` with a corresponding entry in `SOURCE_WEIGHTS` |
+| Additional assets | New tickers can be added to `TRACKED_ASSETS` in `pulseengine/core/config.py` along with keywords in `ASSET_KEYWORDS` and peers in `SECTOR_PEERS` |
+| Additional news feeds | New RSS feeds can be added to `NEWS_FEEDS` in `pulseengine/core/config.py` with a corresponding entry in `SOURCE_WEIGHTS` |
 | Test suite expansion | The current suite has 54 tests covering core invariants, pipeline smoke tests, edge cases, and storage/scan integration. Contributions that add meaningful property-based or integration tests are welcome — see `tests/MAINTENANCE.md` for what makes a good test here |
 | Export functionality | CSV or Excel export of the category overview table |
 | Alert system | Email or webhook notification when a signal crosses a configurable threshold |

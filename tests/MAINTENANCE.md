@@ -14,6 +14,8 @@ catch crashes, broken invariants, and pipeline regressions without freezing inte
 | `test_pipeline.py` | Smoke tests for end-to-end orchestration |
 | `test_logic_coverage.py` | Additional edge coverage for scoring, sentiment, dedup, contradictions |
 | `test_storage_and_scan.py` | Storage retention/cleanup, round-trip, dry-run scan, synthetic backtest |
+| `test_optimisation.py` | Optimisation-related tests |
+| `test_web_surface.py` | Web demo surface tests |
 
 The suite is no longer fixed to a tiny count. Add tests when they improve confidence on important logic.
 
@@ -43,24 +45,23 @@ meaningful pipeline outcomes (no crash, sane outputs, expected side effects).
 
 ## Import paths
 
-All test files use the new package-based imports:
+Canonical imports use the `pulseengine.*` package. The existing test files import from the backward-compat shims intentionally — this verifies the shims themselves remain functional. New tests should prefer canonical paths.
 
-| Import | Module |
+| Import style | Module resolved |
 |---|---|
-| `from app.analysis import X` | Re-export shim in `app/analysis.py` |
-| `from storage.storage import X` | Storage module in `storage/storage.py` |
-| `from src.price import X` | Price logic in `src/price.py` |
-| `from src.signals import X` | Signal logic in `src/signals.py` |
-| `from src.sentiment import X` | Sentiment logic in `src/sentiment.py` |
-| `from src.news import X` | News logic in `src/news.py` |
-| `from src.engine import X` | Engine orchestration in `src/engine.py` |
+| `from pulseengine.core.app import X` | Canonical — `pulseengine/core/app.py` |
+| `from pulseengine.core.storage import X` | Canonical — `pulseengine/core/storage.py` |
+| `from pulseengine.local.scan import X` | Canonical — `pulseengine/local/scan.py` |
+| `from app.analysis import X` | Shim — re-exports from `pulseengine.core` |
+| `from storage.storage import X` | Shim — re-exports from `pulseengine.core.storage` |
+| `from src.engine import X` | Shim — re-exports from `pulseengine.core.app` |
 
 `conftest.py` imports `storage.storage as storage` so that `monkeypatch.setattr` targets the correct module object.
 
-Network calls are mocked at the point of use in `src/engine.py`:
-- `"src.engine.fetch_price_history"`
-- `"src.engine.fetch_news_articles"`
-- `"src.engine.analyse_market_context"`
+Network calls are mocked at the point of use in `src/engine.py` (the backward-compat shim). When writing new tests against canonical modules, patch at the canonical location:
+- `"pulseengine.core.app.fetch_price_history"`
+- `"pulseengine.core.app.fetch_news_articles"`
+- `"pulseengine.core.app.analyse_market_context"`
 
 ---
 
@@ -74,7 +75,7 @@ Network calls are mocked at the point of use in `src/engine.py`:
 | Signal score clamping removed | Clamping tests should fail intentionally |
 | Dedup threshold changed | Review boundary tests in `test_logic_coverage.py` |
 | Storage retention windows changed | Review age-based tests in `test_storage_and_scan.py` |
-| Functions moved between `src/` modules | Update patch targets and imports accordingly |
+| Functions moved between `pulseengine/core/` modules | Update patch targets and imports accordingly |
 
 ---
 

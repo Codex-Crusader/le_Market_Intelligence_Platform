@@ -35,11 +35,14 @@ flowchart TD
 
     THREAD[Spawn daemon thread\n_run_background_scan] --> SIDEBAR
 
-    SIDEBAR[Render sidebar\ncategory and asset selectors\nscan status badge] --> MAINPANEL
-    MAINPANEL[Render main panel\nfor selected asset] --> AUTOREFRESH{90 s elapsed?}
+    SIDEBAR[Render sidebar\ncategory and asset selectors\nscan status badge] --> NAVDETECT
+    NAVDETECT[_push_nav_if_changed\ndetect category / asset change\npush snapshot to _nav_history] --> MAINPANEL
+    MAINPANEL[Render main panel\nBack button + selected asset content] --> AUTOREFRESH{90 s elapsed?}
     AUTOREFRESH -->|Yes| TRIGGER
     AUTOREFRESH -->|No| WAIT([Waiting for user or timer])
 ```
+
+**Navigation history and back button:** On every rerun, `_push_nav_if_changed()` compares the current values of `_selected_category`, `_selected_asset`, and `_confirmed_custom_ticker` against the snapshot saved on the previous rerun. If any differ, the old snapshot is pushed onto `st.session_state["_nav_history"]` (capped at 20 entries). The **← Back** button is rendered fixed-positioned at the top-left of the main panel; clicking it pops the most recent snapshot via `_on_back_click()` and restores the previous page state through `_restore_nav_state()`. A `_nav_restoring` flag on the following rerun tells `_push_nav_if_changed()` to skip the push, preventing a spurious duplicate entry caused by the restore itself appearing as a navigation event.
 
 ---
 
