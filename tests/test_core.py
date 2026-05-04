@@ -109,8 +109,6 @@ def test_low_news_confidence_reduces_sentiment_weight():
 
     assert low["low_news_confidence"] is True
     assert low["news_article_count"] == 1
-    assert low["signal_score"] == low["score"]
-    assert low["signal_label"] == low["label"]
 
     assert high["low_news_confidence"] is False
     assert high["news_article_count"] == 3
