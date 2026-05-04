@@ -48,7 +48,6 @@ import datetime as dt
 import gzip
 import json
 import logging
-import re
 import sys
 from pathlib import Path
 
@@ -64,25 +63,11 @@ from pulseengine.core import (
     cleanup_old_snapshots as _cleanup_old_snapshots,
     STORAGE_AVAILABLE as _STORAGE_AVAILABLE,
 )
+from pulseengine.core.errors import _build_error_payload
 
 log = logging.getLogger(__name__)
 
 _SUMMARY_FILE = Path(STORAGE_DIR) / "_scan_summary.json.gz"
-
-
-def _snake_case(s: str) -> str:
-    return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
-
-
-def _build_error_payload(stage: str, exc: Exception, **context) -> dict:
-    payload = {
-        "type": _snake_case(exc.__class__.__name__),
-        "exception": exc.__class__.__name__,
-        "stage": stage,
-        "message": str(exc),
-    }
-    payload.update({k: v for k, v in context.items() if v is not None})
-    return payload
 
 
 def run_scan(verbose: bool = True, dry_run: bool = False) -> dict:

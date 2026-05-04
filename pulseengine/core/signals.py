@@ -47,14 +47,6 @@ def _kw_re(kw: str) -> re.Pattern:
     return _KW_PATTERN_CACHE[kw]
 
 
-# Pre-warm the pattern cache for every keyword in ASSET_KEYWORDS at import time.
-# Without this, the first scan pays re.compile() cost on every keyword; subsequent
-# scans are free.  Dynamic keywords (e.g. asset_name.lower()) still fall through
-# to the lazy branch above.
-for _kw_pairs in ASSET_KEYWORDS.values():
-    for _kw, _ in _kw_pairs:
-        _kw_re(_kw)
-
 
 # ── News-asset correlation ────────────────────────────────────────────────────
 
@@ -175,8 +167,6 @@ def compute_signal_score(
         return {
             "score": 0.0,
             "label": "No Data",
-            "signal_score": 0.0,
-            "signal_label": "No Data",
             "low_news_confidence": low_news_confidence,
             "news_article_count": news_article_count,
             "components": {},
@@ -259,8 +249,6 @@ def compute_signal_score(
     return {
         "score":          total,
         "label":          label,
-        "signal_score":   total,
-        "signal_label":   label,
         "low_news_confidence": low_news_confidence,
         "news_article_count":  news_article_count,
         "components":     components,

@@ -17,7 +17,6 @@ src/signals, src/context, and src/explanation.
 from __future__ import annotations
 
 import logging
-import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .config import (
@@ -27,7 +26,7 @@ from .config import (
 )
 from .context import analyse_market_context
 from .explanation import build_explanation
-from .errors import DataFetchError
+from .errors import DataFetchError, _build_error_payload
 from .news import cluster_articles, fetch_news_articles
 from .price import (
     compute_momentum_metrics,
@@ -38,20 +37,6 @@ from .signals import compute_signal_score, correlate_news
 
 log = logging.getLogger(__name__)
 
-
-def _snake_case(name: str) -> str:
-    return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
-
-
-def _build_error_payload(stage: str, exc: Exception, **context) -> dict:
-    payload = {
-        "type": _snake_case(exc.__class__.__name__),
-        "exception": exc.__class__.__name__,
-        "stage": stage,
-        "message": str(exc),
-    }
-    payload.update({k: v for k, v in context.items() if v is not None})
-    return payload
 
 try:
     from .storage import save_snapshot as _save_snapshot

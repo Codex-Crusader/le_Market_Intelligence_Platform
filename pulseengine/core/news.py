@@ -40,6 +40,9 @@ from .config import (
 
 log = logging.getLogger(__name__)
 
+_RE_STRIP_HTML     = re.compile(r"<[^>]+>")
+_RE_NORMALIZE_TITLE = re.compile(r"[^a-z0-9\s]")
+
 
 # ── Fetching ─────────────────────────────────────────────────────────────────
 
@@ -340,11 +343,11 @@ def _parse_pub_date(entry) -> Optional[dt.datetime]:
 
 
 def _strip_html(raw: str) -> str:
-    return re.sub(r"<[^>]+>", "", raw).strip()[:600]
+    return _RE_STRIP_HTML.sub("", raw).strip()[:600]
 
 
 def _normalize_title(text: str) -> str:
-    return re.sub(r"[^a-z0-9\s]", "", text.lower())
+    return _RE_NORMALIZE_TITLE.sub("", text.lower())
 
 
 def _jaccard(a: set, b: set) -> float:
