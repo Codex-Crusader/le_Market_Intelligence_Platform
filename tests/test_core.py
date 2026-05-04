@@ -3,37 +3,35 @@ test_core.py — Sanity and invariant tests for pure functions.
 
 Goal: each function runs without crashing and its output is sane.
 Not testing exact values — testing that outputs are usable.
-
-Imports from app (the backward-compat shim) to verify the shim itself works,
-and directly from the src modules to verify the canonical path.
 """
 
 from __future__ import annotations
 
+import datetime as dt
 from types import SimpleNamespace
 
 import pandas as pd
 import pytest
 
-# Backward-compat shim imports — these must keep working
-from app.analysis import (
+from pulseengine.core import (
+    DataFetchError,
     compute_momentum_metrics,
     compute_price_metrics,
+    compute_roc,
+    compute_rsi,
     compute_signal_score,
-    score_sentiment,
+    correlate_news,
     deduplicate_articles,
+    fetch_news_articles,
+    fetch_price_history,
+    generate_keywords,
+    score_sentiment,
 )
 
-from src.errors import DataFetchError
-from src.news import fetch_news_articles
-from src.price import fetch_price_history, compute_rsi, compute_roc
-
-# Canonical imports — new code should use these
-from src.sentiment import score_sentiment as src_score_sentiment
-import datetime as dt
-
-from src.news import deduplicate_articles as src_dedup, generate_keywords
-from src.signals import compute_signal_score as src_signal_score, correlate_news
+# Aliases retained so test function names stay meaningful
+src_score_sentiment = score_sentiment
+src_signal_score    = compute_signal_score
+src_dedup           = deduplicate_articles
 
 
 # ── RSI ───────────────────────────────────────────────────────────────────────
@@ -62,7 +60,7 @@ def test_roc_sign(price_series_rising, price_series_falling):
 # ── Momentum metrics ──────────────────────────────────────────────────────────
 
 def test_momentum_metrics_runs(ohlcv_df, price_series_rising):
-    """compute_momentum_metrics should return a dict with an 'rsi' key."""
+    """compute_momentum_metrics should return a dict with a 'rsi' key."""
     result = compute_momentum_metrics(ohlcv_df(price_series_rising))
     assert isinstance(result, dict)
     assert "rsi" in result
@@ -87,7 +85,7 @@ def test_signal_score_in_range(synthetic_metrics, synthetic_momentum):
 
 
 def test_src_signal_score_in_range(synthetic_metrics, synthetic_momentum):
-    """Same invariant via the canonical src.signals import."""
+    """Same invariant via the canonical pulseengine.core import."""
     result = src_signal_score(synthetic_metrics, synthetic_momentum, [])
     assert -10.0 <= result["score"] <= 10.0
 
@@ -124,7 +122,7 @@ def test_sentiment_compound_in_range():
 
 
 def test_src_sentiment_compound_in_range():
-    """Same invariant via the canonical src.sentiment import."""
+    """Same invariant via the canonical pulseengine.core import."""
     result = src_score_sentiment("markets are crashing hard, major losses everywhere")
     assert -1.0 <= result["compound"] <= 1.0
 
@@ -138,7 +136,7 @@ def test_dedup_reduces_or_preserves_count(synthetic_articles):
 
 
 def test_src_dedup_reduces_or_preserves_count(synthetic_articles):
-    """Same invariant via the canonical src.news import."""
+    """Same invariant via the canonical pulseengine.core import."""
     result = src_dedup(synthetic_articles)
     assert 0 < len(result) <= len(synthetic_articles)
 
@@ -147,12 +145,12 @@ def test_src_dedup_reduces_or_preserves_count(synthetic_articles):
 
 def test_fetch_price_history_returns_none_for_empty_data(mocker):
     """Empty responses should stay empty rather than becoming fetch errors."""
-    mocker.patch("src.price.MAX_RETRIES", 1)
-    mocker.patch("src.price.time.sleep", return_value=None)
-    mocker.patch("src.price.yf.download", return_value=pd.DataFrame())
+    mocker.patch("pulseengine.core.price.MAX_RETRIES", 1)
+    mocker.patch("pulseengine.core.price.time.sleep", return_value=None)
+    mocker.patch("pulseengine.core.price.yf.download", return_value=pd.DataFrame())
     ticker_mock = mocker.Mock()
     ticker_mock.history.return_value = pd.DataFrame()
-    mocker.patch("src.price.yf.Ticker", return_value=ticker_mock)
+    mocker.patch("pulseengine.core.price.yf.Ticker", return_value=ticker_mock)
 
     result = fetch_price_history("TEST", days=1)
     assert result is None
@@ -160,12 +158,12 @@ def test_fetch_price_history_returns_none_for_empty_data(mocker):
 
 def test_fetch_price_history_raises_on_fetch_failure(mocker):
     """Transport failures should raise a fetch error after retries."""
-    mocker.patch("src.price.MAX_RETRIES", 1)
-    mocker.patch("src.price.time.sleep", return_value=None)
-    mocker.patch("src.price.yf.download", side_effect=RuntimeError("boom"))
+    mocker.patch("pulseengine.core.price.MAX_RETRIES", 1)
+    mocker.patch("pulseengine.core.price.time.sleep", return_value=None)
+    mocker.patch("pulseengine.core.price.yf.download", side_effect=RuntimeError("boom"))
     ticker_mock = mocker.Mock()
     ticker_mock.history.side_effect = RuntimeError("boom")
-    mocker.patch("src.price.yf.Ticker", return_value=ticker_mock)
+    mocker.patch("pulseengine.core.price.yf.Ticker", return_value=ticker_mock)
 
     with pytest.raises(DataFetchError):
         fetch_price_history("TEST", days=1)
@@ -188,7 +186,7 @@ def test_generate_keywords_known_ticker(mocker):
     }
     ticker_mock = mocker.Mock()
     ticker_mock.info = mock_info
-    mocker.patch("src.news.yf.Ticker", return_value=ticker_mock)
+    mocker.patch("pulseengine.core.news.yf.Ticker", return_value=ticker_mock)
 
     result = generate_keywords("NVDA")
     assert "NVDA" in result
@@ -204,7 +202,7 @@ def test_generate_keywords_unknown_ticker(mocker):
     """Unknown ticker (empty info) should return [ticker] without raising."""
     ticker_mock = mocker.Mock()
     ticker_mock.info = {}
-    mocker.patch("src.news.yf.Ticker", return_value=ticker_mock)
+    mocker.patch("pulseengine.core.news.yf.Ticker", return_value=ticker_mock)
 
     result = generate_keywords("NOTREAL")
     assert result == ["NOTREAL"]
@@ -212,7 +210,7 @@ def test_generate_keywords_unknown_ticker(mocker):
 
 def test_generate_keywords_network_failure(mocker):
     """Network failure should return [ticker] without raising."""
-    mocker.patch("src.news.yf.Ticker", side_effect=Exception("connection refused"))
+    mocker.patch("pulseengine.core.news.yf.Ticker", side_effect=Exception("connection refused"))
 
     result = generate_keywords("NVDA")
     assert result == ["NVDA"]
@@ -222,7 +220,7 @@ def test_generate_keywords_timeout(mocker):
     """When the fetch thread does not finish within REQUEST_TIMEOUT, return [ticker]."""
     thread_mock = mocker.MagicMock()
     thread_mock.is_alive.return_value = True   # simulates a hung thread
-    mocker.patch("src.news.threading.Thread", return_value=thread_mock)
+    mocker.patch("pulseengine.core.news.threading.Thread", return_value=thread_mock)
 
     result = generate_keywords("NVDA")
     assert result == ["NVDA"]
@@ -263,16 +261,16 @@ def test_correlate_news_no_substring_false_positive():
 
 def test_fetch_news_articles_uses_explicit_timeout(mocker):
     """RSS fetches should be bounded by an explicit timeout."""
-    mocker.patch("src.news.NEWS_FEEDS", [("Test Feed", "https://example.com/feed")])
-    mocker.patch("src.news.MAX_WORKERS", 1)
+    mocker.patch("pulseengine.core.news.NEWS_FEEDS", [("Test Feed", "https://example.com/feed")])
+    mocker.patch("pulseengine.core.news.MAX_WORKERS", 1)
 
     response = mocker.MagicMock()
     response.read.return_value = b"<rss />"
     response.__enter__.return_value = response
     response.__exit__.return_value = False
-    urlopen_mock = mocker.patch("src.news.urllib.request.urlopen", return_value=response)
+    urlopen_mock = mocker.patch("pulseengine.core.news.urllib.request.urlopen", return_value=response)
     mocker.patch(
-        "src.news.feedparser.parse",
+        "pulseengine.core.news.feedparser.parse",
         return_value=SimpleNamespace(entries=[]),
     )
 
