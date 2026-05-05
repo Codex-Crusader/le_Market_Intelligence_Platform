@@ -5,19 +5,15 @@ Goal: pipelines execute without crashing and return minimally usable output.
 Not testing exact structure — testing that the output is there and in range.
 
 All network calls are mocked via conftest fixtures.
-
-Imports from app (the backward-compat shim) to verify the shim itself works.
-New tests added below also import directly from src.engine to verify the
-canonical path.
 """
 
 from __future__ import annotations
 
-from app.analysis import analyse_asset, run_full_scan
-from src.errors import DataFetchError
+from pulseengine.core.app import analyse_asset, run_full_scan
+from pulseengine.core.errors import DataFetchError
 
 
-# ── analyse_asset (via app shim) ──────────────────────────────────────────────
+# ── analyse_asset ─────────────────────────────────────────────────────────────
 
 def test_analyse_asset_runs(mock_price_history, storage_dir, synthetic_articles):
     """Happy path: pipeline completes and returns a dict."""
@@ -37,7 +33,7 @@ def test_analyse_asset_has_signal_in_range(mock_price_history, storage_dir, synt
 
 def test_analyse_asset_no_price_data_does_not_crash(mocker, storage_dir, synthetic_articles):
     """When price fetch returns None, the pipeline must still return a dict (not raise)."""
-    mocker.patch("src.engine.fetch_price_history", return_value=None)
+    mocker.patch("pulseengine.core.app.fetch_price_history", return_value=None)
     result = analyse_asset("Gold", "GC=F", "Commodities", synthetic_articles,
                            with_market_ctx=False)
     assert isinstance(result, dict)
@@ -46,7 +42,7 @@ def test_analyse_asset_no_price_data_does_not_crash(mocker, storage_dir, synthet
 
 def test_analyse_asset_fetch_failure_is_structured(mocker, storage_dir, synthetic_articles):
     """A real fetch failure should be represented explicitly in the result."""
-    mocker.patch("src.engine.fetch_price_history", side_effect=DataFetchError("boom"))
+    mocker.patch("pulseengine.core.app.fetch_price_history", side_effect=DataFetchError("boom"))
     result = analyse_asset("Gold", "GC=F", "Commodities", synthetic_articles,
                            with_market_ctx=False)
     assert isinstance(result, dict)
@@ -90,9 +86,9 @@ def test_run_full_scan_surfaces_structured_fetch_errors(mocker, ohlcv_df,
             raise DataFetchError("boom")
         return ohlcv_df(price_series_rising)
 
-    mocker.patch("src.engine.fetch_price_history", side_effect=_fetch_side_effect)
-    mocker.patch("src.engine.fetch_news_articles", return_value=synthetic_articles)
-    mocker.patch("src.engine.analyse_market_context", return_value=None)
+    mocker.patch("pulseengine.core.app.fetch_price_history", side_effect=_fetch_side_effect)
+    mocker.patch("pulseengine.core.app.fetch_news_articles", return_value=synthetic_articles)
+    mocker.patch("pulseengine.core.app.analyse_market_context", return_value=None)
 
     result = run_full_scan()
     error_entries = [
@@ -104,14 +100,3 @@ def test_run_full_scan_surfaces_structured_fetch_errors(mocker, ohlcv_df,
 
     assert error_entries
     assert error_entries[0]["type"] == "data_fetch_error"
-
-
-# ── Direct src.engine import (canonical path) ─────────────────────────────────
-
-def test_src_engine_analyse_asset_runs(mock_price_history, storage_dir, synthetic_articles):
-    """Importing directly from src.engine must also work."""
-    from src.engine import analyse_asset as engine_analyse_asset
-    result = engine_analyse_asset("Gold", "GC=F", "Commodities", synthetic_articles,
-                                  with_market_ctx=False)
-    assert isinstance(result, dict)
-    assert "signal" in result

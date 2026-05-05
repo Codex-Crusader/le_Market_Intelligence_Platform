@@ -6,12 +6,12 @@ import datetime as dt
 
 import pandas as pd
 
-from config.settings import DEDUP_SIMILARITY_THRESHOLD
-from src.explanation import _detect_contradictions
-from src.news import _jaccard, deduplicate_articles
-from src.price import compute_price_metrics, compute_roc
-from src.sentiment import score_sentiment
-from src.signals import compute_signal_score, correlate_news
+from pulseengine.core.config import DEDUP_SIMILARITY_THRESHOLD
+from pulseengine.core.explanation import _detect_contradictions
+from pulseengine.core.news import _jaccard, deduplicate_articles
+from pulseengine.core.price import compute_price_metrics, compute_roc
+from pulseengine.core.sentiment import score_sentiment
+from pulseengine.core.signals import compute_signal_score, correlate_news
 
 
 def test_compute_price_metrics_known_values(ohlcv_df):
@@ -83,8 +83,8 @@ def test_deduplicate_articles_keeps_first_duplicate_and_unique_entries():
 
 def test_score_sentiment_fallback_path(monkeypatch):
     """Keyword fallback should still produce bounded sentiment output."""
-    monkeypatch.setattr("src.sentiment.VADER_AVAILABLE", False)
-    monkeypatch.setattr("src.sentiment._vader", None)
+    monkeypatch.setattr("pulseengine.core.sentiment.VADER_AVAILABLE", False)
+    monkeypatch.setattr("pulseengine.core.sentiment._vader", None)
 
     s = score_sentiment("surge rally growth profit")
     assert -1.0 <= s["compound"] <= 1.0
@@ -95,11 +95,12 @@ def test_score_sentiment_vader_path(monkeypatch):
     """When VADER is available, score_sentiment should proxy VADER scores."""
 
     class _FakeVader:
-        def polarity_scores(self, _text):
+        @staticmethod
+        def polarity_scores(_text):
             return {"compound": 0.42, "pos": 0.6, "neg": 0.1, "neu": 0.3}
 
-    monkeypatch.setattr("src.sentiment.VADER_AVAILABLE", True)
-    monkeypatch.setattr("src.sentiment._vader", _FakeVader())
+    monkeypatch.setattr("pulseengine.core.sentiment.VADER_AVAILABLE", True)
+    monkeypatch.setattr("pulseengine.core.sentiment._vader", _FakeVader())
 
     s = score_sentiment("any text")
     assert s["compound"] == 0.42
@@ -109,7 +110,7 @@ def test_score_sentiment_vader_path(monkeypatch):
 def test_compute_signal_score_component_behavior_and_clamping(monkeypatch):
     """Extreme weighted components should still clamp total score to [-10, +10]."""
     monkeypatch.setattr(
-        "src.signals.ASSET_CLASS_WEIGHTS",
+        "pulseengine.core.signals.ASSET_CLASS_WEIGHTS",
         {
             "Stress": {
                 "trend": 5.0,

@@ -26,8 +26,8 @@ import textwrap
 
 import pytest
 
-from src.news import deduplicate_articles, _jaccard, _normalize_title
-from config.settings import DEDUP_SIMILARITY_THRESHOLD
+from pulseengine.core.news import deduplicate_articles, _jaccard, _normalize_title
+from pulseengine.core.config import DEDUP_SIMILARITY_THRESHOLD
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -201,7 +201,7 @@ def _sleep_inside_semaphore(func) -> list[int]:
 
 def test_fetch_price_history_sleep_outside_semaphore():
     """time.sleep must not be called while holding the yfinance semaphore."""
-    from src.price import fetch_price_history
+    from pulseengine.core.price import fetch_price_history
     bad = _sleep_inside_semaphore(fetch_price_history)
     assert not bad, (
         f"fetch_price_history: time.sleep() found inside _yf_semaphore at line(s) {bad}. "
@@ -211,7 +211,7 @@ def test_fetch_price_history_sleep_outside_semaphore():
 
 def test_fetch_via_ticker_history_sleep_outside_semaphore():
     """Same invariant for the Ticker.history() fallback fetcher."""
-    from src.price import _fetch_via_ticker_history
+    from pulseengine.core.price import _fetch_via_ticker_history
     bad = _sleep_inside_semaphore(_fetch_via_ticker_history)
     assert not bad, (
         f"_fetch_via_ticker_history: time.sleep() found inside _yf_semaphore at line(s) {bad}."

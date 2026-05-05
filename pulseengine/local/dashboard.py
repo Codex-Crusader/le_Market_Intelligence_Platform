@@ -173,6 +173,20 @@ def _maybe_trigger_scan() -> None:
     ).start()
 
 
+@st.fragment(run_every=5)
+def _poll_scan_completion() -> None:
+    """Polls every 5 s while a scan is running and triggers a full page rerun on completion."""
+    state = _get_scan_state()
+    if (
+        not state["running"]
+        and state.get("last_finished", 0) > 0
+        and not st.session_state.get("_scan_rerun_done", False)
+    ):
+        st.session_state["_scan_rerun_done"] = True
+        st.session_state["_scan_refresh_epoch"] = int(st.session_state.get("_scan_refresh_epoch", 0)) + 1
+        st.rerun(scope="app")
+
+
 # ── Navigation history ─────────────────────────────────────────────────────────
 
 # Keys that trigger a history push when they change (the "page identity").
@@ -216,8 +230,15 @@ st.sidebar.checkbox(
 
 if st.session_state.get("_enable_auto_scan", True):
     _maybe_trigger_scan()
-# Rerun once after a background scan completes so the UI picks up fresh data.
+
 _scan_state = _get_scan_state()
+
+# While a scan is running, poll every 5 s for completion and trigger a full page rerun.
+if _scan_state["running"]:
+    _poll_scan_completion()
+
+# Fallback: handles completion detected on the next user-triggered rerun (e.g. if the
+# dashboard was closed and reopened after the scan finished without the fragment active).
 if (
     not _scan_state["running"]
     and _scan_state.get("last_finished", 0) > 0
@@ -241,10 +262,10 @@ def _build_snapshot_price_cache(summary_results: dict) -> tuple[tuple[str, float
     cache_items: list[tuple[str, float]] = []
     for category, assets in TRACKED_ASSETS.items():
         category_rows = summary_results.get(category, {}) if isinstance(summary_results, dict) else {}
-        for asset_name, ticker in assets.items():
+        for asset_name, sym in assets.items():
             change_1d = category_rows.get(asset_name, {}).get("change_1d")
             if change_1d is not None:
-                cache_items.append((ticker, float(change_1d)))
+                cache_items.append((sym, float(change_1d)))
     return tuple(cache_items)
 
 
@@ -440,12 +461,25 @@ st.button(
 
 _stale = is_data_stale(_summary)
 if _stale:
-    st.info("Data is stale. Refresh recommended.")
-
-    if st.button("Refresh now"):
-        st.session_state["_scan_refresh_epoch"] = st.session_state.get("_scan_refresh_epoch", 0) + 1
-        st.session_state["_stale_refresh_triggered"] = True
-        st.rerun()
+    _scan_time = _summary.get("scan_time", "")
+    _age_str = ""
+    if _scan_time:
+        try:
+            _last = dt.datetime.fromisoformat(_scan_time)
+            if _last.tzinfo is None:
+                _last = _last.replace(tzinfo=dt.timezone.utc)
+            _age_secs = int((dt.datetime.now(dt.timezone.utc) - _last).total_seconds())
+            if _age_secs < 3600:
+                _age_str = f"{_age_secs // 60}m ago"
+            elif _age_secs < 86400:
+                _age_str = f"{_age_secs // 3600}h ago"
+            else:
+                _age_str = f"{_age_secs // 86400}d ago"
+        except (ValueError, TypeError):
+            pass
+    _refresh_status = "refreshing in background" if _scan_state["running"] else "background refresh queued"
+    _label = f"last scan {_age_str} · {_refresh_status}" if _age_str else _refresh_status
+    st.caption(f"Showing older data — {_label}")
 
 st.markdown(f"# {selected_asset}")
 st.caption(f"{selected_category}  ·  `{ticker}`  ·  last 30 days")

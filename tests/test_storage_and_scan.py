@@ -7,9 +7,9 @@ import gzip
 import json
 from pathlib import Path
 
-from app.backtest import evaluate_signal_accuracy
-from app.scan import run_scan
-from storage import storage
+from pulseengine.core.backtest import evaluate_signal_accuracy
+from pulseengine.local.scan import run_scan
+from pulseengine.core import storage
 
 
 def _write_snapshot_file(base_dir: Path, asset: str, date: dt.date, payload: dict) -> Path:
@@ -92,9 +92,9 @@ def test_retention_policy_and_cleanup_with_temp_dir(storage_dir):
 
 def test_run_scan_dry_run_completes_without_writing(mocker):
     """Dry-run scans should complete and skip persistence of summary files."""
-    mocker.patch("app.scan.fetch_news_articles", return_value=[])
+    mocker.patch("pulseengine.local.scan.fetch_news_articles", return_value=[])
     mocker.patch(
-        "app.scan.analyse_asset",
+        "pulseengine.local.scan.analyse_asset",
         return_value={
             "signal": {"score": 0.0, "label": "Neutral"},
             "metrics": {
