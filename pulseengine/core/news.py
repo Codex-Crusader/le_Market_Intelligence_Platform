@@ -22,7 +22,6 @@ import re
 import threading
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Optional
 from urllib.parse import urlparse
 
 import feedparser
@@ -184,7 +183,7 @@ def cluster_articles(articles: list[dict]) -> dict[str, list[dict]]:
 def get_display_clusters(
     news: list[dict],
     max_clusters: int = 2,
-    min_relevance: Optional[float] = None,
+    min_relevance: float | None = None,
 ) -> dict:
     """
     Return top N topic clusters for display, filtering low-relevance noise.
@@ -327,7 +326,7 @@ def generate_keywords(ticker: str) -> list[str]:
 
 # ── Private helpers ───────────────────────────────────────────────────────────
 
-def _parse_pub_date(entry) -> Optional[dt.datetime]:
+def _parse_pub_date(entry) -> dt.datetime | None:
     for attr in ("published_parsed", "updated_parsed"):
         parsed = getattr(entry, attr, None)
         if parsed:

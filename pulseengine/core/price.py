@@ -17,7 +17,6 @@ import math
 import tempfile
 import threading
 import time
-from typing import Optional
 
 import pandas as pd
 import yfinance as yf
@@ -49,7 +48,7 @@ _yf_semaphore = threading.Semaphore(PRICE_FETCH_WORKERS)
 def fetch_price_history(
     ticker: str,
     days: int = LOOKBACK_DAYS,
-) -> Optional[pd.DataFrame]:
+) -> pd.DataFrame | None:
     """Download OHLCV history for *ticker*.
 
     Returns None when the market simply has no data for the requested window.
@@ -110,7 +109,7 @@ def fetch_price_history(
     return None
 
 
-def _fetch_via_ticker_history(ticker: str, days: int) -> Optional[pd.DataFrame]:
+def _fetch_via_ticker_history(ticker: str, days: int) -> pd.DataFrame | None:
     """
     Fallback fetcher using yf.Ticker.history().
 
@@ -143,7 +142,7 @@ def _fetch_via_ticker_history(ticker: str, days: int) -> Optional[pd.DataFrame]:
 
 # ── Price metrics ────────────────────────────────────────────────────────────
 
-def compute_price_metrics(df: Optional[pd.DataFrame]) -> dict:
+def compute_price_metrics(df: pd.DataFrame | None) -> dict:
     """Return a dict of price analytics derived from a price DataFrame."""
     if df is None or df.empty:
         return {}
@@ -158,7 +157,7 @@ def compute_price_metrics(df: Optional[pd.DataFrame]) -> dict:
     if not math.isfinite(latest):
         return {}
 
-    def safe_pct(n: int) -> Optional[float]:
+    def safe_pct(n: int) -> float | None:
         if len(close) > n:
             old = float(close.iloc[-(n + 1)])
             if abs(old) < 1e-9 or not math.isfinite(old):
@@ -202,7 +201,7 @@ def classify_trend(series: pd.Series) -> str:
 
 # ── Momentum metrics ─────────────────────────────────────────────────────────
 
-def compute_momentum_metrics(df: Optional[pd.DataFrame]) -> dict:
+def compute_momentum_metrics(df: pd.DataFrame | None) -> dict:
     """
     Return RSI, rate-of-change, trend strength, and momentum acceleration.
     Falls back to neutral defaults when data is insufficient.

@@ -16,7 +16,6 @@ from __future__ import annotations
 import datetime as dt
 import logging
 import re
-from typing import Optional
 
 from .config import (
     ASSET_CLASS_WEIGHTS,
@@ -53,7 +52,7 @@ def _kw_re(kw: str) -> re.Pattern:
 def correlate_news(
     asset_name: str,
     articles: list[dict],
-    keywords: Optional[list[str]] = None,
+    keywords: list[str] | None = None,
 ) -> list[dict]:
     """
     Match articles to *asset_name* using weighted keywords, a recency bonus,
@@ -142,8 +141,8 @@ def compute_signal_score(
     metrics: dict,
     momentum: dict,
     news: list[dict],
-    market_ctx: Optional[dict] = None,
-    category: Optional[str] = None,
+    market_ctx: dict | None = None,
+    category: str | None = None,
 ) -> dict:
     """
     Compute a composite bullish/bearish signal for an asset.
