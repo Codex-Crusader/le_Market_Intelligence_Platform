@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
 
 from .config import (
     MARKET_BENCHMARK,
@@ -43,8 +42,8 @@ log = logging.getLogger(__name__)
 def analyse_market_context(
     asset_name: str,
     category: str,
-    asset_change: Optional[float],
-    price_cache: Optional[dict[str, float]] = None,
+    asset_change: float | None,
+    price_cache: dict[str, float] | None = None,
 ) -> dict:
     """
     Compare the asset's move against sector peers and the broad market
@@ -83,10 +82,10 @@ def analyse_market_context(
 
     # ── Peer comparison (parallel) ───────────────────────────────────────────
     peers = SECTOR_PEERS.get(asset_name, [])
-    peer_data: dict[str, Optional[float]] = {}
+    peer_data: dict[str, float | None] = {}
     peer_errors: dict[str, dict] = {}
 
-    def _fetch_peer(peer_name: str) -> tuple[str, Optional[float], Optional[dict]]:
+    def _fetch_peer(peer_name: str) -> tuple[str, float | None, dict | None]:
         peer_ticker = _find_ticker(peer_name)
         if not peer_ticker:
             return peer_name, None, None
@@ -128,7 +127,7 @@ def analyse_market_context(
     # ── Benchmark comparison ─────────────────────────────────────────────────
     bench_ticker = MARKET_BENCHMARK.get(category)
     if bench_ticker:
-        bench_chg: Optional[float] = None
+        bench_chg: float | None = None
         if price_cache is not None and bench_ticker in price_cache:
             bench_chg = price_cache[bench_ticker]
         else:
@@ -176,11 +175,11 @@ _CATEGORY_MAP: dict[str, str] = {
 }
 
 
-def _find_ticker(asset_name: str) -> Optional[str]:
+def _find_ticker(asset_name: str) -> str | None:
     """Return the ticker for *asset_name*."""
     return _TICKER_MAP.get(asset_name)
 
 
-def find_category(asset_name: str) -> Optional[str]:
+def find_category(asset_name: str) -> str | None:
     """Return the category string for *asset_name*, or None if not tracked."""
     return _CATEGORY_MAP.get(asset_name)

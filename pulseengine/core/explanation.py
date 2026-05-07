@@ -17,7 +17,6 @@ Pipeline role (step 10 of the full engine):
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from .config import (
     PRICE_CHANGE_THRESHOLD,
@@ -35,9 +34,9 @@ def build_explanation(
     asset_name: str,
     metrics: dict,
     related_news: list[dict],
-    market_ctx: Optional[dict] = None,
-    momentum: Optional[dict] = None,
-    signal: Optional[dict] = None,
+    market_ctx: dict | None = None,
+    momentum: dict | None = None,
+    signal: dict | None = None,
 ) -> dict:
     """
     Produce a structured explanation with:
@@ -463,7 +462,7 @@ def _build_why_it_matters(
 def _build_verdict(
     name: str,
     direction: str,
-    change: Optional[float],
+    change: float | None,
     factors: list[dict],
     news: list[dict],
 ) -> str:
@@ -496,9 +495,9 @@ def _build_verdict(
 def _assess_confidence(
     factors: list[dict],
     news: list[dict],
-    ctx: Optional[dict],
-    metrics: Optional[dict] = None,
-    contradictions: Optional[list[dict]] = None,
+    ctx: dict | None,
+    metrics: dict | None = None,
+    contradictions: list[dict] | None = None,
 ) -> dict:
     """
     Return a dict: {level, score, reasons, increases, decreases}.
@@ -609,7 +608,7 @@ def _assess_confidence(
 
 # ── Formatting helper ─────────────────────────────────────────────────────────
 
-def _fmt_pct(val: Optional[float]) -> str:
+def _fmt_pct(val: float | None) -> str:
     if val is None:
         return "N/A"
     sign = "+" if val > 0 else ""
