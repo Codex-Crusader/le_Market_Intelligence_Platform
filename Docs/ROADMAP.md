@@ -45,12 +45,15 @@ What exists right now:
 - RSI, momentum, trend strength, and 8-category event detection
 - Per-asset-class signal weighting profiles
 - Background scan daemon refreshing all assets every 30 minutes
+- Startup auto-refresh — `@st.fragment(run_every=5)` poller triggers a page rerun when the scan completes, no manual refresh required
+- Session-state navigation history with a fixed ← Back button in the main panel
 - Compressed snapshot storage with tiered retention (7 / 30 / 60 days)
 - Backtesting module with hit-rate evaluation
 - Streamlit live demo at [pulseengine.streamlit.app](https://pulseengine.streamlit.app/)
 - Docker support, 54 tests, full documentation
 - Local installer (`install.py`, `install.sh`, `install.ps1`) with zero terminal friction
 - Clean `pulseengine/core/` + `pulseengine/local/` + `pulseengine/web/` split — completed in v0.3.0
+- Modern Python 3.10+ type annotations (`X | None` union syntax) across all core modules
 
 What is missing:
 

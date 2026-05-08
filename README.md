@@ -73,6 +73,7 @@ Historical snapshots are persisted to compressed JSON files on disk. A backgroun
 | Event detection | 8 event categories (central bank, geopolitical, earnings, etc.) |
 | Market context | Sector peer comparison and benchmark alignment analysis |
 | Background scan | Full 24-asset scan every 30 minutes via daemon thread |
+| Startup auto-refresh | Fragment poller detects scan completion and reruns the page automatically |
 | Historical storage | Compressed per-asset JSON snapshots with tiered retention |
 | Backtesting | Hit-rate evaluation by signal strength and label |
 | Retention policy | Full detail 7 days, reduced detail 30 days, deleted after 60 days |
@@ -265,7 +266,7 @@ On startup the dashboard:
 1. Renders the sidebar with category and asset selectors
 2. Checks whether a full-market scan is due
 3. Launches a background daemon thread to scan all 24 assets if the last scan summary is missing or older than 30 minutes
-4. Displays `System initializing — full market scan running in background...` while the scan is active
+4. Displays a quiet scan-age caption while the scan is active; a `@st.fragment(run_every=5)` poller reruns the full page automatically the moment the scan thread finishes — no manual refresh needed
 5. Fetches price and news data for the currently selected asset and renders the full analysis panel
 
 You can also enter any valid Yahoo Finance ticker in the sidebar (for example `PLTR`, `ARM`, `TSM`, `BRK-B`) to run arbitrary ticker analysis locally without editing `pulseengine/core/config.py`.

@@ -5,7 +5,6 @@ All notable changes to this project will be documented in this file.
 ---
 
 ## [Unreleased]
-### "Back Button + Navigation History"
 
 ### Added
 - Session-state navigation history stack in `pulseengine/local/dashboard.py`:
@@ -15,10 +14,27 @@ All notable changes to this project will be documented in this file.
   - Module-level tuples `_NAV_DETECT_KEYS` and `_NAV_SNAPSHOT_KEYS` defining which session-state keys constitute page identity and which are saved in each history snapshot.
 - **← Back button** rendered fixed-positioned at the top-left of the main panel via a CSS `#pe-back-slot-marker` anchor span. Disabled when the history stack is empty; enabled as soon as the user has navigated away from the initial view. Implemented with `st.button("← Back", key="_back_btn_main", on_click=_on_back_click)`.
 - Back button CSS in `pulseengine/local/styles.py`: a `:has(> * > #pe-back-slot-marker) + div` selector fixed-positions the button wrapper to `top: 60px; left: calc(21rem + 1rem)` with `z-index: 1000`, matching the sidebar default width and gutter.
+- **Startup auto-refresh** — a `@st.fragment(run_every=5)` poller (`_scan_completion_poller`) runs in the background and triggers a full page rerun the moment the background scan thread finishes. This eliminates the stale-data banner-and-button pattern; instead, a quiet caption shows scan age and refresh status, and the UI updates automatically without user action.
+- **Export & Offline placeholders** in the local dashboard sidebar under a "Export & Offline (Coming in v0.5)" expander — greyed-out Export to CSV and Export to PDF buttons so roadmap features are visible in the UI.
+
+### Changed
+- Replaced the stale-data banner + manual `Refresh now` button in `pulseengine/local/dashboard.py` with a compact age caption and the automatic `_scan_completion_poller` fragment.
+- `pulseengine/core/errors.py` expanded: `_build_error_payload` moved from `app.py` into `errors.py` alongside the custom exception hierarchy so the helper is co-located with the types it acts on.
+- Dead function and variable cleanup across `pulseengine/core/app.py`, `pulseengine/core/news.py`, `pulseengine/core/signals.py`, and `pulseengine/local/scan.py` — removed unused helpers and module-level variables that contributed to startup import time.
+
+### Fixed
+- Variable shadowing in `_build_snapshot_price_cache` — the inner `ticker` loop variable shadowed the outer function parameter; renamed to avoid the collision.
+- `_FakeVader.polarity_scores` in the test suite converted to a `@staticmethod`; `self` was unused, and the bound-method form triggered a linting warning.
+- Test imports migrated from legacy shim paths (`src.*`, `app.*`, `config.settings`) to canonical `pulseengine.core.*` across `test_logic_coverage.py`, `test_optimisation.py`, `test_pipeline.py`, and `test_storage_and_scan.py`.
+- Removed stale assertions on `signal_score` and `signal_label` duplicate keys that were dropped from the pipeline result schema.
+
+### Refactored
+- All `Optional[X]` type annotations across `pulseengine/core/` replaced with the Python 3.10+ union syntax `X | None` (`context.py`, `explanation.py`, `news.py`, `price.py`, `signals.py`). No runtime behaviour changes.
 
 ### Notes
 - Navigation history is scoped to `st.session_state` — it resets on page refresh but persists across asset switches within a single session.
-- No changes to the signal model, data pipeline, storage, or API.
+- The `_scan_completion_poller` fragment runs every 5 seconds and exits after triggering one rerun; it does not poll indefinitely.
+- No changes to the signal model, data pipeline, storage, or public API.
 
 ---
 
