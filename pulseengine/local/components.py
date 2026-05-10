@@ -110,8 +110,8 @@ def _format_scan_label(scan_state: dict, summary: dict) -> tuple[str, str]:
     try:
         last_dt = dt.datetime.fromisoformat(ts)
         if last_dt.tzinfo is None:
-            last_dt = last_dt.replace(tzinfo=dt.timezone.utc)
-        age_sec = int((dt.datetime.now(dt.timezone.utc) - last_dt).total_seconds())
+            last_dt = last_dt.replace(tzinfo=dt.UTC)
+        age_sec = int((dt.datetime.now(dt.UTC) - last_dt).total_seconds())
         age_min = max(age_sec // 60, 0)
     except (ValueError, TypeError):
         return "No scan data yet", "#635a48"

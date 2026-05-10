@@ -22,11 +22,11 @@ import uuid
 from pathlib import Path
 
 from .config import (
+    SNAPSHOT_LOAD_LIMIT,
     STORAGE_DIR,
     STORAGE_FULL_DETAIL_DAYS,
-    STORAGE_REDUCED_DETAIL_DAYS,
     STORAGE_MAX_DAYS,
-    SNAPSHOT_LOAD_LIMIT,
+    STORAGE_REDUCED_DETAIL_DAYS,
     TRACKED_ASSETS,
 )
 from .errors import StorageError

@@ -17,8 +17,9 @@ src/signals, src/context, and src/explanation.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Callable
+from typing import Any
 
 from .config import (
     LOOKBACK_DAYS,
@@ -26,8 +27,8 @@ from .config import (
     TRACKED_ASSETS,
 )
 from .context import analyse_market_context
-from .explanation import build_explanation
 from .errors import DataFetchError, _build_error_payload
+from .explanation import build_explanation
 from .news import cluster_articles, fetch_news_articles
 from .price import (
     compute_momentum_metrics,
@@ -43,8 +44,8 @@ _save_snapshot: Callable[..., Any]
 _get_historical_features: Callable[..., Any]
 
 try:
-    from .storage import save_snapshot as _save_snapshot
     from .storage import get_historical_features as _get_historical_features
+    from .storage import save_snapshot as _save_snapshot
     STORAGE_AVAILABLE = True
 except ImportError:
     STORAGE_AVAILABLE = False

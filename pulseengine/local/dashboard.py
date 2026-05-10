@@ -33,14 +33,15 @@ import time
 
 import streamlit as st
 
+import pulseengine.local.components as ui
 from pulseengine.core import (
-    TRACKED_ASSETS,
-    DASHBOARD_TITLE,
     DASHBOARD_ICON,
     DASHBOARD_LAYOUT,
+    DASHBOARD_TITLE,
     DEFAULT_CATEGORY,
     PRICE_CHANGE_THRESHOLD,
     STORAGE_DIR,
+    TRACKED_ASSETS,
     VADER_AVAILABLE,
     correlate_news,
     get_display_clusters,
@@ -48,13 +49,12 @@ from pulseengine.core import (
 from pulseengine.core.config import NEWS_CACHE_TTL, PRICE_CACHE_TTL, SCAN_INTERVAL_MINUTES
 from pulseengine.local.data import (
     cached_generated_keywords,
-    cached_news,
     cached_live_analysis,
+    cached_news,
     cached_scan_summary,
     is_data_stale,
 )
 from pulseengine.local.styles import load_css
-import pulseengine.local.components as ui
 
 log = logging.getLogger(__name__)
 
@@ -467,8 +467,8 @@ if _stale:
         try:
             _last = dt.datetime.fromisoformat(_scan_time)
             if _last.tzinfo is None:
-                _last = _last.replace(tzinfo=dt.timezone.utc)
-            _age_secs = int((dt.datetime.now(dt.timezone.utc) - _last).total_seconds())
+                _last = _last.replace(tzinfo=dt.UTC)
+            _age_secs = int((dt.datetime.now(dt.UTC) - _last).total_seconds())
             if _age_secs < 3600:
                 _age_str = f"{_age_secs // 60}m ago"
             elif _age_secs < 86400:

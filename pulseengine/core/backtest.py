@@ -18,9 +18,9 @@ import datetime as dt
 import logging
 from typing import Any
 
-from .storage import load_snapshots, list_tracked_assets_with_history
 from .config import BACKTEST_WINDOW, TRACKED_ASSETS
 from .errors import StorageError
+from .storage import list_tracked_assets_with_history, load_snapshots
 
 log = logging.getLogger(__name__)
 

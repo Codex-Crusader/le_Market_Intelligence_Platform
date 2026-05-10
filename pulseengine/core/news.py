@@ -50,7 +50,7 @@ def fetch_news_articles() -> list[dict]:
     Pull recent articles from every configured RSS feed in parallel,
     then deduplicate the combined result.
     """
-    cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=NEWS_MAX_AGE_HOURS)
+    cutoff = dt.datetime.now(dt.UTC) - dt.timedelta(hours=NEWS_MAX_AGE_HOURS)
 
     def _fetch_feed(source_name: str, feed_url: str) -> list[dict]:
         # Validate URL scheme — only http/https permitted (blocks file://, ftp://, internal addrs)
@@ -101,7 +101,7 @@ def fetch_news_articles() -> list[dict]:
             articles.extend(future.result())
 
     articles.sort(
-        key=lambda a: a["published"] or dt.datetime.min.replace(tzinfo=dt.timezone.utc),
+        key=lambda a: a["published"] or dt.datetime.min.replace(tzinfo=dt.UTC),
         reverse=True,
     )
     articles = articles[:NEWS_MAX_ARTICLES]
@@ -338,7 +338,7 @@ def _parse_pub_date(entry) -> dt.datetime | None:
                 return dt.datetime(
                     parsed[0], parsed[1], parsed[2],
                     parsed[3], parsed[4], parsed[5],
-                    tzinfo=dt.timezone.utc,
+                    tzinfo=dt.UTC,
                 )
             except (ValueError, OverflowError, TypeError):
                 pass
