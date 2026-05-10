@@ -22,6 +22,21 @@ The v0.3 restructure establishes this foundation for future expansion:
 
 from __future__ import annotations
 
+# Pipeline orchestration
+from .app import (
+    STORAGE_AVAILABLE,
+    analyse_asset,
+    fetch_all_metrics_parallel,
+    run_full_scan,
+)
+
+# Backtesting
+from .backtest import (
+    evaluate_all_assets,
+    evaluate_signal_accuracy,
+    get_signal_streak,
+)
+
 # Configuration
 from .config import (
     ASSET_CLASS_WEIGHTS,
@@ -60,12 +75,32 @@ from .config import (
     YFINANCE_REQUEST_DELAY,
 )
 
+# Context
+from .context import (
+    analyse_market_context,
+    find_category,
+)
+
 # Errors
 from .errors import (
     DataFetchError,
     PipelineError,
     SignalComputationError,
     StorageError,
+)
+
+# Explanation
+from .explanation import (
+    build_explanation,
+)
+
+# News
+from .news import (
+    cluster_articles,
+    deduplicate_articles,
+    fetch_news_articles,
+    generate_keywords,
+    get_display_clusters,
 )
 
 # Price
@@ -76,15 +111,6 @@ from .price import (
     compute_roc,
     compute_rsi,
     fetch_price_history,
-)
-
-# News
-from .news import (
-    cluster_articles,
-    deduplicate_articles,
-    fetch_news_articles,
-    generate_keywords,
-    get_display_clusters,
 )
 
 # Sentiment
@@ -101,41 +127,15 @@ from .signals import (
     detect_events,
 )
 
-# Context
-from .context import (
-    analyse_market_context,
-    find_category,
-)
-
-# Explanation
-from .explanation import (
-    build_explanation,
-)
-
-# Pipeline orchestration
-from .app import (
-    STORAGE_AVAILABLE,
-    analyse_asset,
-    fetch_all_metrics_parallel,
-    run_full_scan,
-)
-
 # Storage
 from .storage import (
     apply_retention_policy,
     cleanup_old_snapshots,
     get_historical_features,
+    list_tracked_assets_with_history,
     load_recent_snapshots,
     load_snapshots,
-    list_tracked_assets_with_history,
     save_snapshot,
-)
-
-# Backtesting
-from .backtest import (
-    evaluate_all_assets,
-    evaluate_signal_accuracy,
-    get_signal_streak,
 )
 
 __all__ = [

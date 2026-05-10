@@ -16,10 +16,11 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
+from typing import Any
 
-from .storage import load_snapshots, list_tracked_assets_with_history
 from .config import BACKTEST_WINDOW, TRACKED_ASSETS
 from .errors import StorageError
+from .storage import list_tracked_assets_with_history, load_snapshots
 
 log = logging.getLogger(__name__)
 
@@ -186,14 +187,14 @@ def evaluate_signal_accuracy(
         "Slightly Bearish", "Bearish", "Strong Bearish",
     ]
     for lbl in label_order:
-        data = label_counts.get(lbl)
-        if not data or data["total"] == 0:
+        lbl_data = label_counts.get(lbl)
+        if not lbl_data or lbl_data["total"] == 0:
             continue
-        hr = data["hits"] / data["total"]
+        hr = lbl_data["hits"] / lbl_data["total"]
         by_label[lbl] = {
             "hit_rate": round(hr, 4),
-            "count":    data["total"],
-            "summary":  f"{lbl} -> {hr * 100:.0f}% accuracy ({data['total']} samples)",
+            "count":    lbl_data["total"],
+            "summary":  f"{lbl} -> {hr * 100:.0f}% accuracy ({lbl_data['total']} samples)",
         }
         label_summaries.append(by_label[lbl]["summary"])
 
@@ -259,7 +260,7 @@ def get_signal_streak(details: list[dict]) -> dict:
 # Internal
 
 def _empty_result(message: str, error: dict | None = None) -> dict:
-    result = {
+    result: dict[str, Any] = {
         "hit_rate":           None,
         "num_evaluated":      0,
         "details":            [],

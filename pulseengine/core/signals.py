@@ -77,7 +77,7 @@ def correlate_news(
             if len(clean) >= 3:
                 kw_pairs.append((clean, 2))
 
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     matched: list[dict] = []
     for article in articles:
         text  = article["title"] + " " + article["summary"]

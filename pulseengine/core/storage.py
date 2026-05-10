@@ -22,11 +22,11 @@ import uuid
 from pathlib import Path
 
 from .config import (
+    SNAPSHOT_LOAD_LIMIT,
     STORAGE_DIR,
     STORAGE_FULL_DETAIL_DAYS,
-    STORAGE_REDUCED_DETAIL_DAYS,
     STORAGE_MAX_DAYS,
-    SNAPSHOT_LOAD_LIMIT,
+    STORAGE_REDUCED_DETAIL_DAYS,
     TRACKED_ASSETS,
 )
 from .errors import StorageError
@@ -332,7 +332,7 @@ def get_historical_features(
     """
     snaps = load_recent_snapshots(asset_name, limit, strict=strict)
 
-    empty = {
+    empty: dict[str, object] = {
         "signal_consistency": None,
         "trend_persistence":  0,
         "today_vs_yesterday": {},

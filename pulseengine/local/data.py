@@ -24,10 +24,10 @@ from pulseengine.core import (
     compute_momentum_metrics,
     compute_price_metrics,
     compute_signal_score,
+    correlate_news,
     fetch_news_articles,
     fetch_price_history,
     generate_keywords,
-    correlate_news,
 )
 from pulseengine.core.config import NEWS_CACHE_TTL, PRICE_CACHE_TTL, SCAN_INTERVAL_MINUTES
 
@@ -163,7 +163,7 @@ def is_data_stale(summary: dict, ttl_hours: float = 1.0) -> bool:
     try:
         last = dt.datetime.fromisoformat(scan_time)
         if last.tzinfo is None:
-            last = last.replace(tzinfo=dt.timezone.utc)
-        return dt.datetime.now(dt.timezone.utc) - last > dt.timedelta(hours=ttl_hours)
+            last = last.replace(tzinfo=dt.UTC)
+        return dt.datetime.now(dt.UTC) - last > dt.timedelta(hours=ttl_hours)
     except (ValueError, TypeError):
         return True

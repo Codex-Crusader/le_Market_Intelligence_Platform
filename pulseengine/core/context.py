@@ -34,7 +34,7 @@ from .config import (
     TRACKED_ASSETS,
 )
 from .errors import DataFetchError
-from .price import fetch_price_history, compute_price_metrics
+from .price import compute_price_metrics, fetch_price_history
 
 log = logging.getLogger(__name__)
 

@@ -36,10 +36,13 @@ jobs:
       - name: Install lint dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff
+          pip install -r requirements-dev.txt
 
       - name: Lint with ruff
-        run: ruff check .
+        run: ruff check pulseengine/
+
+      - name: Type-check with mypy
+        run: mypy pulseengine/core/
 
   tests:
     name: Tests (py${{ matrix.python-version }})
