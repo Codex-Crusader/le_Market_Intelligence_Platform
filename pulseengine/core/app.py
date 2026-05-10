@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Callable
 
 from .config import (
     LOOKBACK_DAYS,
@@ -38,14 +39,17 @@ from .signals import compute_signal_score, correlate_news
 log = logging.getLogger(__name__)
 
 
+_save_snapshot: Callable[..., Any]
+_get_historical_features: Callable[..., Any]
+
 try:
     from .storage import save_snapshot as _save_snapshot
     from .storage import get_historical_features as _get_historical_features
     STORAGE_AVAILABLE = True
 except ImportError:
     STORAGE_AVAILABLE = False
-    def _save_snapshot(*_a, **_kw): pass           # noqa: E731
-    def _get_historical_features(*_a, **_kw): return {}  # noqa: E731
+    def _save_snapshot(*_a: Any, **_kw: Any) -> None: pass           # noqa: E731
+    def _get_historical_features(*_a: Any, **_kw: Any) -> dict: return {}  # noqa: E731
 
 
 # ── Single-asset analysis ─────────────────────────────────────────────────────

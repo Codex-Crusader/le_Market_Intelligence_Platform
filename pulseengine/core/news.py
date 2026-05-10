@@ -335,7 +335,11 @@ def _parse_pub_date(entry) -> dt.datetime | None:
             if not isinstance(parsed, (tuple, list)) or len(parsed) < 6:
                 continue
             try:
-                return dt.datetime(*parsed[:6], tzinfo=dt.timezone.utc)
+                return dt.datetime(
+                    parsed[0], parsed[1], parsed[2],
+                    parsed[3], parsed[4], parsed[5],
+                    tzinfo=dt.timezone.utc,
+                )
             except (ValueError, OverflowError, TypeError):
                 pass
     return None

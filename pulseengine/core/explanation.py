@@ -96,7 +96,7 @@ def build_explanation(
         ),
     ]
 
-    if is_significant and vol > 0:
+    if is_significant and chg_1d is not None and vol > 0:
         z_score = abs(chg_1d) / vol
         if z_score > 2:
             detail_parts.append(

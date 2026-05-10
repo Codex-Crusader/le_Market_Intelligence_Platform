@@ -332,7 +332,7 @@ def get_historical_features(
     """
     snaps = load_recent_snapshots(asset_name, limit, strict=strict)
 
-    empty = {
+    empty: dict[str, object] = {
         "signal_consistency": None,
         "trend_persistence":  0,
         "today_vs_yesterday": {},
