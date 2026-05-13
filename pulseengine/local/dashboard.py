@@ -46,7 +46,7 @@ from pulseengine.core import (
     correlate_news,
     get_display_clusters,
 )
-from pulseengine.core.config import NEWS_CACHE_TTL, PRICE_CACHE_TTL, SCAN_INTERVAL_MINUTES
+from pulseengine.core.config import NEWS_CACHE_TTL, PRICE_CACHE_TTL, REQUEST_TIMEOUT, SCAN_INTERVAL_MINUTES
 from pulseengine.local.data import (
     cached_generated_keywords,
     cached_live_analysis,
@@ -96,11 +96,19 @@ def _normalize_ticker_input(raw: str) -> str:
 
 
 def _ticker_exists(symbol: str) -> bool:
-    try:
-        import yfinance as yf
-        return bool(getattr(yf.Ticker(symbol).fast_info, "currency", None))
-    except (OSError, ValueError, KeyError):
-        return False
+    _result: list = [False]
+
+    def _check() -> None:
+        try:
+            import yfinance as yf
+            _result[0] = bool(getattr(yf.Ticker(symbol).fast_info, "currency", None))
+        except Exception as exc:  # yfinance raises inconsistently across versions/networks
+            log.debug("_ticker_exists(%r): %s", symbol, exc)
+
+    t = threading.Thread(target=_check, daemon=True)
+    t.start()
+    t.join(timeout=REQUEST_TIMEOUT)
+    return _result[0]
 
 
 # ── Scan orchestration ─────────────────────────────────────────────────────────
@@ -395,7 +403,7 @@ st.sidebar.caption(f"Ticker: `{ticker}`")
 st.sidebar.caption(f"Prices refresh: every {PRICE_CACHE_TTL}s")
 st.sidebar.caption(f"News refresh: every {NEWS_CACHE_TTL}s")
 st.sidebar.caption(f"Sentiment engine: {'VADER' if VADER_AVAILABLE else 'Keyword fallback'}")
-st.sidebar.caption(f"Last refresh: {dt.datetime.now().strftime('%H:%M:%S')}")
+st.sidebar.caption(f"Page rendered: {dt.datetime.now().strftime('%H:%M:%S')}")
 
 if st.sidebar.button("Refresh Data"):
     st.session_state["_scan_refresh_epoch"] = st.session_state.get("_scan_refresh_epoch", 0) + 1

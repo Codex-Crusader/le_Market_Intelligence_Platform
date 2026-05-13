@@ -151,20 +151,13 @@ def render_signal_legend_sidebar() -> None:
     with st.sidebar.expander("Signal Interpretation", expanded=False):
         st.markdown(
             """
-            **+6 to +10**
-            Strong Bullish
-
-            **+2 to +6**
-            Bullish
-
-            **-2 to +2**
-            Neutral
-
-            **-6 to -2**
-            Bearish
-
-            **-10 to -6**
-            Strong Bearish
+            **+6 to +10** — Strong Bullish
+            **+3 to +6** — Bullish
+            **+1 to +3** — Slightly Bullish
+            **-1 to +1** — Neutral
+            **-3 to -1** — Slightly Bearish
+            **-6 to -3** — Bearish
+            **-10 to -6** — Strong Bearish
             """
         )
         st.caption("Scores are weighted composite signals, not raw price change.")
