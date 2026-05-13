@@ -46,7 +46,12 @@ from pulseengine.core import (
     correlate_news,
     get_display_clusters,
 )
-from pulseengine.core.config import NEWS_CACHE_TTL, PRICE_CACHE_TTL, REQUEST_TIMEOUT, SCAN_INTERVAL_MINUTES
+from pulseengine.core.config import (
+    NEWS_CACHE_TTL,
+    PRICE_CACHE_TTL,
+    REQUEST_TIMEOUT,
+    SCAN_INTERVAL_MINUTES,
+)
 from pulseengine.local.data import (
     cached_generated_keywords,
     cached_live_analysis,
