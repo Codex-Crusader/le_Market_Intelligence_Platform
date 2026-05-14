@@ -490,7 +490,12 @@ if _stale:
                 _age_str = f"{_age_secs // 86400}d ago"
         except (ValueError, TypeError):
             pass
-    _refresh_status = "refreshing in background" if _scan_state["running"] else "background refresh queued"
+    if _scan_state["running"]:
+        _refresh_status = "refreshing in background"
+    elif st.session_state.get("_enable_auto_scan", True):
+        _refresh_status = "background refresh queued"
+    else:
+        _refresh_status = "auto-scan disabled — use sidebar to refresh"
     _label = f"last scan {_age_str} · {_refresh_status}" if _age_str else _refresh_status
     st.caption(f"Showing older data — {_label}")
 

@@ -124,8 +124,9 @@ def _format_scan_label(scan_state: dict, summary: dict) -> tuple[str, str]:
         h, m = divmod(age_min, 60)
         ago = f"{h}h {m}m ago" if m else f"{h}h ago"
 
-    next_min = max(SCAN_INTERVAL_MINUTES - age_min, 0)
-    label = f"✅ Last scanned {ago}  ·  next scan in ~{next_min} min"
+    next_min = SCAN_INTERVAL_MINUTES - age_min
+    next_str = "overdue" if next_min <= 0 else f"~{next_min} min"
+    label = f"✅ Last scanned {ago}  ·  next scan in {next_str}"
     color = "#8a7040" if age_min < SCAN_INTERVAL_MINUTES else "#635a48"
     return label, color
 
@@ -150,15 +151,13 @@ def render_signal_legend_sidebar() -> None:
     """Render a compact signal interpretation legend in the sidebar."""
     with st.sidebar.expander("Signal Interpretation", expanded=False):
         st.markdown(
-            """
-            **+6 to +10** — Strong Bullish
-            **+3 to +6** — Bullish
-            **+1 to +3** — Slightly Bullish
-            **-1 to +1** — Neutral
-            **-3 to -1** — Slightly Bearish
-            **-6 to -3** — Bearish
-            **-10 to -6** — Strong Bearish
-            """
+            "- **+6 to +10** — Strong Bullish\n"
+            "- **+3 to +6** — Bullish\n"
+            "- **+1 to +3** — Slightly Bullish\n"
+            "- **-1 to +1** — Neutral\n"
+            "- **-3 to -1** — Slightly Bearish\n"
+            "- **-6 to -3** — Bearish\n"
+            "- **-10 to -6** — Strong Bearish"
         )
         st.caption("Scores are weighted composite signals, not raw price change.")
 
@@ -213,7 +212,8 @@ def render_data_status_banner(scan_state: dict, stale: bool, summary: dict) -> N
     if scan_time:
         try:
             last_dt = dt.datetime.fromisoformat(scan_time)
-            st.caption(f"Market data last updated: {last_dt.strftime('%Y-%m-%d %H:%M')}")
+            tz_label = " UTC" if last_dt.tzinfo is not None else ""
+            st.caption(f"Market data last updated: {last_dt.strftime('%Y-%m-%d %H:%M')}{tz_label}")
         except (ValueError, TypeError):
             pass
 
@@ -257,7 +257,7 @@ def render_signal_card(
 
     if low_news_conf:
         st.warning(
-            "⚠️ Low news coverage — this signal is based primarily on price data. "
+            "Low news coverage — this signal is based primarily on price data. "
             "Sentiment component has low confidence.",
             icon="⚠️",
         )
@@ -347,7 +347,6 @@ def render_article(item: dict) -> None:
         else '<span class="rel-low">LOW</span>'
     )
 
-    src_w = item.get("source_weight", 1.0)
     pub   = ""
     if item.get("published"):
         pub = item["published"].strftime("%b %d, %H:%M")
@@ -380,7 +379,7 @@ def render_article(item: dict) -> None:
         f'<div class="news-row">'
         f'<strong style="color:#e4d9c4;font-family:var(--font-display)">{safe_title}</strong><br>'
         f'<span class="news-meta">'
-        f'{safe_source} (weight {src_w:.2f}) &middot; {pub} &middot; '
+        f'{safe_source} &middot; {pub} &middot; '
         f'<span style="color:{sent_color}">{sent_word} ({sent:+.2f})</span>'
         f' &middot; Relevance: {rel_html}'
         f'</span>'

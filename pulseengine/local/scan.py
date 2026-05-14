@@ -84,7 +84,7 @@ def run_scan(verbose: bool = True, dry_run: bool = False) -> dict:
         {category: {asset_name: scalar_summary_dict}}
     plus top-level meta fields (scan_date, errors, etc.).
     """
-    started = dt.datetime.now().isoformat()
+    started = dt.datetime.now(dt.UTC).isoformat()
     log.info("Full market scan started at %s", started)
 
     if dry_run:

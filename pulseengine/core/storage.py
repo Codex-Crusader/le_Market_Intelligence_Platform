@@ -142,7 +142,7 @@ def _snapshot_unchanged(path: Path, new_data: dict) -> bool:
         return False
     try:
         existing = _read_gz(path)
-    except (OSError, ValueError):
+    except (OSError, ValueError, StorageError):
         return False  # corrupted existing file — overwrite it. no mercy
 
     # qualitative fields: any change → write immediately
