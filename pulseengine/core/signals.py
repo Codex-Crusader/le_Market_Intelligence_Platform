@@ -46,7 +46,6 @@ def _kw_re(kw: str) -> re.Pattern:
     return _KW_PATTERN_CACHE[kw]
 
 
-
 # ── News-asset correlation ────────────────────────────────────────────────────
 
 def correlate_news(

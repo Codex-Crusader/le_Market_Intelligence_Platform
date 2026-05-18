@@ -120,14 +120,14 @@ def analyse_asset(
         try:
             _save_snapshot(asset_name, metrics, momentum, signal, news[:5], market_ctx=market_ctx)
         except Exception as exc:
-            log.debug("Snapshot not saved for %s: %s", asset_name, exc)
+            log.warning("Snapshot not saved for %s: %s", asset_name, exc)
 
     historical_features: dict = {}
     if STORAGE_AVAILABLE:
         try:
             historical_features = _get_historical_features(asset_name)
         except Exception as exc:
-            log.debug("Historical features unavailable for %s: %s", asset_name, exc)
+            log.warning("Historical features unavailable for %s: %s", asset_name, exc)
 
     return {
         "ticker":              ticker,

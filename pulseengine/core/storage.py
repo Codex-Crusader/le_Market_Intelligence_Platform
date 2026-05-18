@@ -297,7 +297,7 @@ def load_recent_snapshots(
             date = dt.datetime.strptime(date_str, "%Y%m%d").date()
             candidates.append((date, path))
         except ValueError:
-            pass
+            log.debug("Skipping file with unparseable date: %s", path.name)
 
     # Sort newest-first, take only last `limit` files
     candidates.sort(key=lambda x: x[0], reverse=True)
@@ -468,8 +468,10 @@ def cleanup_old_snapshots(days_to_keep: int = STORAGE_MAX_DAYS) -> int:
             if dt.datetime.strptime(date_str, "%Y%m%d").date() < cutoff:
                 path.unlink()
                 deleted += 1
-        except (ValueError, OSError):
-            pass
+        except ValueError:
+            continue
+        except OSError as exc:
+            log.warning("Could not delete old snapshot %s: %s", path.name, exc)
 
     if deleted:
         log.info("Cleaned up %d old snapshot(s).", deleted)
