@@ -30,7 +30,7 @@ The project is split into two surfaces sharing one core engine:
 
 ## Current State
 
-[![Version](https://img.shields.io/badge/Version-0.3.1-a16207?style=flat-square)]()
+[![Version](https://img.shields.io/badge/Version-0.3.2-a16207?style=flat-square)]()
 [![Assets](https://img.shields.io/badge/Assets-24%20Tracked-0ea5e9?style=flat-square)]()
 [![Tests](https://img.shields.io/badge/Tests-54%20passing-22c55e?style=flat-square)]()
 [![Sentiment](https://img.shields.io/badge/Sentiment-VADER-7c3aed?style=flat-square)]()

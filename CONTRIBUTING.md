@@ -177,7 +177,7 @@ All code must follow PEP 8. Key conventions used in this codebase:
   - `snake_case` for functions and variables
   - `UPPER_SNAKE_CASE` for module-level constants in `pulseengine/core/config.py`
   - `_leading_underscore` for private/internal functions
-- **Type hints**: Use type hints on all function signatures. Use `Optional[T]` from `typing` for nullable returns
+- **Type hints**: Use type hints on all function signatures. Use `X | None` union syntax (Python 3.10+) for nullable returns
 - **Docstrings**: One-line docstrings for simple functions, multi-line for public functions with multiple parameters or complex return values
 - **Imports**: Standard library first, third-party second, local last — each group separated by a blank line
 - **No magic numbers**: All tunable values must live in `pulseengine/core/config.py`, never hardcoded in `pulseengine/core/app.py`, `pulseengine/local/dashboard.py`, or elsewhere. `config/settings.py` is a backward-compat shim pointing to the canonical location

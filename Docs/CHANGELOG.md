@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+---
+
+## [0.3.2] — 2026-05-18
+### "UX Polish + Observability"
+
 ### Added
 - Session-state navigation history stack in `pulseengine/local/dashboard.py`:
   - `_push_nav_if_changed()` — called on every rerun; detects changes in selected category, asset, or custom ticker and pushes a snapshot of the previous page state onto `st.session_state["_nav_history"]` (capped at 20 entries).
@@ -21,12 +26,23 @@ All notable changes to this project will be documented in this file.
 - Replaced the stale-data banner + manual `Refresh now` button in `pulseengine/local/dashboard.py` with a compact age caption and the automatic `_scan_completion_poller` fragment.
 - `pulseengine/core/errors.py` expanded: `_build_error_payload` moved from `app.py` into `errors.py` alongside the custom exception hierarchy so the helper is co-located with the types it acts on.
 - Dead function and variable cleanup across `pulseengine/core/app.py`, `pulseengine/core/news.py`, `pulseengine/core/signals.py`, and `pulseengine/local/scan.py` — removed unused helpers and module-level variables that contributed to startup import time.
+- Snapshot-save and historical-feature errors in `pulseengine/core/app.py` now logged at `WARNING` level instead of `DEBUG`.
+- Skipped files with unparseable date strings in `pulseengine/core/storage.py` now emit a `DEBUG` log entry instead of silently passing.
+- `except (ValueError, OSError)` in `pulseengine/core/storage.py` split into separate handlers; `OSError` now logs a `WARNING`.
 
 ### Fixed
 - Variable shadowing in `_build_snapshot_price_cache` — the inner `ticker` loop variable shadowed the outer function parameter; renamed to avoid the collision.
 - `_FakeVader.polarity_scores` in the test suite converted to a `@staticmethod`; `self` was unused, and the bound-method form triggered a linting warning.
 - Test imports migrated from legacy shim paths (`src.*`, `app.*`, `config.settings`) to canonical `pulseengine.core.*` across `test_logic_coverage.py`, `test_optimisation.py`, `test_pipeline.py`, and `test_storage_and_scan.py`.
 - Removed stale assertions on `signal_score` and `signal_label` duplicate keys that were dropped from the pipeline result schema.
+- Duplicate warning icon removed from `st.warning` calls in `pulseengine/local/components.py` — icon was rendered both as inline text and via the `icon=` kwarg simultaneously.
+- Signal legend in `render_signal_legend_sidebar()` now renders as a proper CommonMark bullet list instead of a single concatenated string.
+- `source_weight` value removed from article card HTML in `pulseengine/local/components.py` — internal scoring metadata is no longer exposed in the UI.
+- UTC timezone label added to the "Market data last updated" caption in the sidebar.
+- Scan status now displays "overdue" instead of "~0 min" when the next scheduled scan is past due (`pulseengine/local/components.py`).
+- Auto-scan disabled state in `pulseengine/local/dashboard.py` no longer shows a stale "queued" caption.
+- `pulseengine/local/scan.py` now uses `dt.datetime.now(dt.UTC)` for a timezone-aware `scan_time` timestamp.
+- `StorageError` added to the exception clause in `_snapshot_unchanged` in `pulseengine/core/storage.py`.
 
 ### Refactored
 - All `Optional[X]` type annotations across `pulseengine/core/` replaced with the Python 3.10+ union syntax `X | None` (`context.py`, `explanation.py`, `news.py`, `price.py`, `signals.py`). No runtime behaviour changes.

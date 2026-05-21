@@ -47,6 +47,8 @@ This document lists every significant constant, module-level variable, function 
 | `RELEVANCE_HIGH` | `int` | 6 | Minimum relevance score for a news article to be considered high-relevance. |
 | `RELEVANCE_MEDIUM` | `int` | 3 | Minimum relevance score for medium-relevance articles included in correlation. |
 | `DEDUP_SIMILARITY_THRESHOLD` | `float` | 0.65 | Jaccard similarity threshold above which two articles are considered duplicates. |
+| `MIN_NEWS_ARTICLES_FOR_CONFIDENCE` | `int` | 3 | Minimum number of correlated articles required for a high-confidence sentiment signal. Below this count the sentiment weight is reduced by `LOW_NEWS_SENTIMENT_WEIGHT_MULTIPLIER`. |
+| `LOW_NEWS_SENTIMENT_WEIGHT_MULTIPLIER` | `float` | 0.3 | Multiplier applied to the sentiment component of the signal score when the article count is below `MIN_NEWS_ARTICLES_FOR_CONFIDENCE`. |
 
 ### 5. Dashboard Settings
 
@@ -70,8 +72,6 @@ This document lists every significant constant, module-level variable, function 
 | `PRICE_FETCH_WORKERS` | `int` | 3 | Thread pool size specifically for parallel Yahoo Finance price fetches and `run_full_scan`. |
 | `YFINANCE_REQUEST_DELAY` | `float` | 0.75 | Base delay in seconds between Yahoo Finance requests to avoid rate limiting. |
 | `YFINANCE_BACKOFF_BASE` | `float` | 1.0 | Multiplier base for exponential backoff on retried Yahoo Finance requests. |
-| `CACHE_TTL_SECONDS` | `int` | 300 | General-purpose cache TTL in seconds (same value as `NEWS_CACHE_TTL`). |
-
 ### 7. Source Credibility Weights
 
 | Name | Type | Shape | Description |
