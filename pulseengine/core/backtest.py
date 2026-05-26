@@ -125,7 +125,7 @@ def evaluate_signal_accuracy(
         return _empty_result("No evaluable signal pairs found in stored history.")
 
     hit_rate  = hits / evaluated
-    avg_score = sum(scores) / len(scores)
+    avg_score = sum(abs(s) for s in scores) / len(scores)
     pct_str   = f"{hit_rate * 100:.1f}%"
     # "strong" means we were right 65%+ of the time. a coin is 50%. we're slightly better than a coin
     quality   = "strong" if hit_rate >= 0.65 else "moderate" if hit_rate >= 0.50 else "weak"

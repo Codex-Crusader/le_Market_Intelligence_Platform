@@ -40,8 +40,8 @@ def _kw_re(kw: str) -> re.Pattern:
     """Return a compiled regex that matches *kw* as a whole token in lowercase text."""
     if kw not in _KW_PATTERN_CACHE:
         escaped = re.escape(kw)
-        prefix  = r'\b'
-        suffix  = r'\b' if kw[-1].isalnum() else ''
+        prefix  = r'\b' if kw and kw[0].isalnum() else ''
+        suffix  = r'\b' if kw and kw[-1].isalnum() else ''
         _KW_PATTERN_CACHE[kw] = re.compile(prefix + escaped + suffix)
     return _KW_PATTERN_CACHE[kw]
 
@@ -235,7 +235,7 @@ def compute_signal_score(
         label = "Bullish"
     elif total >= SIGNAL_THRESHOLDS["slightly_bullish"]:
         label = "Slightly Bullish"
-    elif total > SIGNAL_THRESHOLDS["neutral"]:
+    elif total >= SIGNAL_THRESHOLDS["neutral"]:
         label = "Neutral"
     elif total >= SIGNAL_THRESHOLDS["slightly_bearish"]:
         label = "Slightly Bearish"
