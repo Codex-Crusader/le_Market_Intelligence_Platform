@@ -373,7 +373,7 @@ Takes no parameters. Fetches news once, then analyses every tracked asset in par
 |---|---|---|
 | `kw` | `str` | Lowercase keyword string from `ASSET_KEYWORDS` or the auto-appended asset name |
 
-Returns a `re.Pattern` that matches `kw` as a whole token. For keywords ending with an alphanumeric character, the pattern is `\b{escaped_kw}\b`. For keywords ending with a special character (e.g. `opec+`), only a leading `\b` is applied. Results are cached in `_KW_PATTERN_CACHE`.
+Returns a `re.Pattern` that matches `kw` as a whole token. A leading `\b` is added only when `kw` starts with an alphanumeric character; a trailing `\b` is added only when `kw` ends with an alphanumeric character. Both guards are independent, so a keyword like `opec+` (alphanumeric start, special-char end) produces `\bopec\+` with no trailing boundary. Results are cached in `_KW_PATTERN_CACHE`.
 
 ---
 

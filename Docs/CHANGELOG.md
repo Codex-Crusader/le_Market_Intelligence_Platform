@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- `_kw_re` in `pulseengine/core/signals.py` now applies a leading `\b` only when the keyword starts with an alphanumeric character. Previously the prefix was unconditional, so keywords beginning with a special character (e.g. a hypothetical `+term`) would generate an invalid boundary assertion. Suffix `\b` was already conditional; both guards are now symmetric.
+- Neutral signal label in `compute_signal_score` (`pulseengine/core/signals.py`) now uses `>= SIGNAL_THRESHOLDS["neutral"]` instead of `>`, so a score exactly at the neutral boundary is correctly classified as Neutral rather than Slightly Bearish.
+- `avg_signal_score` in `evaluate_signal_accuracy` (`pulseengine/core/backtest.py`) now computed as the mean of absolute scores, ensuring the reported average always reflects signal magnitude regardless of direction.
+
 ---
 
 ## [0.3.2] — 2026-05-18
